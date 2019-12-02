@@ -142,6 +142,12 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                     servername)
             except:
                 app_logger.exception("{} - Could not create tunnel".format(uuidcode))
+                app_logger.trace("{} - Call stop_job".format(uuidcode))
+                stop_job(app_logger,
+                         uuidcode,
+                         servername,
+                         request_headers,
+                         app_urls)
                 return
             status = "running"
         else:
