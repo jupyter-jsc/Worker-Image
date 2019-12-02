@@ -237,11 +237,7 @@ class Jobs(Resource):
                       request.headers.get('Intern-Authorization'))
         
         servername = request.headers.get('servername')
-        # Create Job description and header for unicore job
-        unicore_json = unicore_utils.create_job(app.log,
-                                                uuidcode,
-                                                request.json)
-
+        # Create header for unicore job
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
                                                                           uuidcode,
                                                                           request.headers,
@@ -266,6 +262,12 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 534
+        
+        # Create Job description
+        unicore_json = unicore_utils.create_job(app.log,
+                                                uuidcode,
+                                                request.json,
+                                                unicore_input)
 
         # Get URL and certificate to communicate with UNICORE/X
         app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))        
@@ -355,6 +357,7 @@ class Jobs(Resource):
 
         # upload input files to job
         #     Save content type
+        """
         content_type = unicore_header.get('Content-Type', False)
         unicore_header['Content-Type'] = "application/octet-stream"
         app.log.info("{} - Upload input files for UNICORE/X Job".format(uuidcode))
@@ -399,7 +402,7 @@ class Jobs(Resource):
             unicore_header['Content-Type'] = content_type
         else:
             del unicore_header['Content-Type']
-
+        """
         try:
             hub_communication.status(app.log,
                                      uuidcode, 
@@ -411,6 +414,7 @@ class Jobs(Resource):
                                      servername)
         except:
             app.log.warning("{} - Could not update status for JupyterHub".format(uuidcode))
+        """
         # start job by Post to action:start link
         try:
             method = "POST"
@@ -437,7 +441,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-        
+        """
         # get file directory
         # this will be used in get. Ask it here once and send it to get() afterwards
         filedirectory = ""
