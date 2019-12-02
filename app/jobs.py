@@ -237,11 +237,7 @@ class Jobs(Resource):
                       request.headers.get('Intern-Authorization'))
         
         servername = request.headers.get('servername')
-        # Create Job description and header for unicore job
-        unicore_json = unicore_utils.create_job(app.log,
-                                                uuidcode,
-                                                request.json)
-
+        # Create header for unicore job
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
                                                                           uuidcode,
                                                                           request.headers,
@@ -266,6 +262,12 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 534
+        
+        # Create Job description
+        unicore_json = unicore_utils.create_job(app.log,
+                                                uuidcode,
+                                                request.json,
+                                                unicore_input)
 
         # Get URL and certificate to communicate with UNICORE/X
         app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))        
@@ -353,91 +355,6 @@ class Jobs(Resource):
                 return "", 539
         
 
-        # upload input files to job
-        #     Save content type
-        content_type = unicore_header.get('Content-Type', False)
-        unicore_header['Content-Type'] = "application/octet-stream"
-        app.log.info("{} - Upload input files for UNICORE/X Job".format(uuidcode))
-        try:
-            hub_communication.status(app.log,
-                                     uuidcode,
-                                     app.urls.get('hub', {}).get('url_proxy_route'),
-                                     app.urls.get('hub', {}).get('url_status'),
-                                     request.headers.get('jhubtoken'),
-                                     'uploadfiles',
-                                     request.headers.get('escapedusername'),
-                                     servername)
-        except:
-            app.log.warning("{} - Could not update status for JupyterHub".format(uuidcode))
-        for inp in unicore_input:
-            try:
-                method = "PUT"
-                method_args = {"url": properties_json['_links']['workingDirectory']['href']+"/files/"+inp.get('To'),
-                               "headers": unicore_header,
-                               "data": inp.get('Data'),
-                               "certificate": cert}
-                text, status_code, response_header = unicore_communication.request(app.log,
-                                                                                   uuidcode,
-                                                                                   method,
-                                                                                   method_args)
-                if status_code != 204:
-                    app.log.warning("{} - Could not upload file. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                    raise Exception("{} - Could not upload file. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
-                else:
-                    unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-            except:
-                app.log.exception("{} - Could not upload input file {}. {} {}".format(uuidcode, inp.get('To', '<unknown input file>'), method, remove_secret(method_args)))
-                app.log.warning("{} - UNICORE/X input dict: {}".format(uuidcode, unicore_input))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers,
-                         app.urls)
-                return "", 539
-        if content_type:
-            unicore_header['Content-Type'] = content_type
-        else:
-            del unicore_header['Content-Type']
-
-        try:
-            hub_communication.status(app.log,
-                                     uuidcode, 
-                                     app.urls.get('hub', {}).get('url_proxy_route'),
-                                     app.urls.get('hub', {}).get('url_status'),
-                                     request.headers.get('jhubtoken'),
-                                     'jobstarted',
-                                     request.headers.get('escapedusername'),
-                                     servername)
-        except:
-            app.log.warning("{} - Could not update status for JupyterHub".format(uuidcode))
-        # start job by Post to action:start link
-        try:
-            method = "POST"
-            method_args = {"url": properties_json['_links']['action:start']['href'],
-                           "headers": unicore_header,
-                           "data": "{}",
-                           "certificate": cert}
-            app.log.info("{} - Start UNICORE/X Job".format(uuidcode))
-            text, status_code, response_header = unicore_communication.request(app.log,
-                                                                               uuidcode,
-                                                                               method,
-                                                                               method_args)
-            if status_code != 200:
-                app.log.warning("{} - Could not start job. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                raise Exception("{} - Could not start job. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
-            else:
-                unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-        except:
-            app.log.exception("{} - Could not start job. {} {}".format(uuidcode, method, remove_secret(method_args)))
-            app.log.trace("{} - Call stop_job".format(uuidcode))
-            stop_job(app.log,
-                     uuidcode,
-                     servername,
-                     request.headers,
-                     app.urls)
-            return "", 539
-        
         # get file directory
         # this will be used in get. Ask it here once and send it to get() afterwards
         filedirectory = ""
