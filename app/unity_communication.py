@@ -15,7 +15,7 @@ from app import hub_communication
 from app.utils import remove_secret
 
 
-def renew_token(app_logger, uuidcode, token_url, tokeninfo_url, cert_path, scope, refreshtoken, accesstoken, expire, jhubtoken, app_hub_url_proxy_route, app_hub_url_token, username, servername=''):
+def renew_token(app_logger, uuidcode, token_url, refreshtoken, accesstoken, expire, jhubtoken, app_hub_url_proxy_route, app_hub_url_token, username, servername=''):
     if int(expire) - time.time() > 60:
         return accesstoken, expire
     app_logger.info("{} - Renew Token".format(uuidcode))
@@ -23,19 +23,10 @@ def renew_token(app_logger, uuidcode, token_url, tokeninfo_url, cert_path, scope
     if token_url == '':
         app_logger.warning("{} - Use default token_url. Please send token_url in header".format(uuidcode))
         token_url = unity.get('links').get('token')
-    if tokeninfo_url == '':
-        app_logger.warning("{} - Use default tokeninfo_url. Please send tokeninfo_url in header".format(uuidcode))
-        tokeninfo_url = unity.get('links').get('tokeninfo')
-    if cert_path == '':
-        app_logger.warning("{} - Use default cert_path. Please send cert_path in header".format(uuidcode))
-        cert_path = unity.get('certificate', False)
-    if scope == '':
-        app_logger.warning("{} - Use default scope. Please send scope in header".format(uuidcode))
-        scope = ' '.join(unity.get('scope'))
-    if unity.get(token_url, None):
-        b64key = base64.b64encode(bytes('{}:{}'.format(unity.get(token_url).get('client_id'), unity.get(token_url).get('client_secret')), 'utf-8')).decode('utf-8')
-    else:
-        b64key = base64.b64encode(bytes('{}:{}'.format(unity.get('client_id'), unity.get('client_secret')), 'utf-8')).decode('utf-8')
+    tokeninfo_url = unity[token_url].get('links', {}).get('tokeninfo')
+    cert_path = unity[token_url].get('certificate', False)
+    scope = ' '.join(unity[token_url].get('scope'))
+    b64key = base64.b64encode(bytes('{}:{}'.format(unity[token_url].get('client_id'), unity[token_url].get('client_secret')), 'utf-8')).decode('utf-8')
     data = {'refresh_token': refreshtoken,
             'grant_type': 'refresh_token',
             'scope': scope}
