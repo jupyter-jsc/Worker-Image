@@ -78,6 +78,10 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     app_logger.debug("{} - Create UNICORE/X Header".format(uuidcode))
     accesstoken, expire = renew_token(app_logger,
                                       uuidcode,
+                                      request_headers.get("tokenurl"),
+                                      request_headers.get("tokeninfourl"),
+                                      request_headers.get("certpath"),
+                                      request_headers.get("scope"),
                                       request_headers.get("refreshtoken"),
                                       request_headers.get('accesstoken'),
                                       request_headers.get('expire'),
@@ -104,7 +108,7 @@ def create_job(app_logger, uuidcode, request_json, unicore_input):
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
            'Imports': []}
-    
+
     for inp in unicore_input:
         job['Imports'].append(
             {

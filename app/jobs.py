@@ -24,14 +24,14 @@ class Jobs(Resource):
         uuidcode = request.headers.get('uuidcode', '<no uuidcode>')
         app.log.info("{} - Get Server Status".format(uuidcode))
         app.log.trace("{} - Headers: {}".format(uuidcode, request.headers.to_list()))
-        
+
         # Check for J4J intern token
         validate_auth(app.log,
                       uuidcode,
                       request.headers.get('intern-authorization'))
-        
+
         servername = request.headers.get('servername')
-        
+
         # Create UNICORE header and get certificate
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,     # @UnusedVariable
                                                                           uuidcode,
@@ -128,7 +128,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-        
+
 
         # get the 'real' status of the job from the files in the working_directory
         # 'real' means: We don't care about Queued, ready, running or something. We just want to know: Is it bad (failed or cancelled) or good (running or spawning)
@@ -157,7 +157,7 @@ class Jobs(Resource):
                                         cert,
                                         request.headers.get('jhubtoken'),
                                         request.headers.get('escapedusername'),
-                                        servername)                    
+                                        servername)
                 except:
                     app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
                                                                                                                               app.urls.get('tunnel', {}).get('url_tunnel'),
@@ -197,7 +197,7 @@ class Jobs(Resource):
                 status = 'waitforhostname'
             app.log.info("{} - Update JupyterHub status ({})".format(uuidcode, status))
             hub_communication.status(app.log,
-                                     uuidcode, 
+                                     uuidcode,
                                      app.urls.get('hub', {}).get('url_proxy_route'),
                                      app.urls.get('hub', {}).get('url_status'),
                                      request.headers.get('jhubtoken'),
@@ -235,7 +235,7 @@ class Jobs(Resource):
         validate_auth(app.log,
                       uuidcode,
                       request.headers.get('Intern-Authorization'))
-        
+
         servername = request.headers.get('servername')
         # Create header for unicore job
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
@@ -245,7 +245,7 @@ class Jobs(Resource):
                                                                           app.urls.get('hub', {}).get('url_token'),
                                                                           request.headers.get('escapedusername'),
                                                                           servername)
-        
+
 
         # Create input files for the job. A working J4J_tunnel webservice is required
         try:
@@ -262,7 +262,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 534
-        
+
         # Create Job description
         unicore_json = unicore_utils.create_job(app.log,
                                                 uuidcode,
@@ -270,11 +270,11 @@ class Jobs(Resource):
                                                 unicore_input)
 
         # Get URL and certificate to communicate with UNICORE/X
-        app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))        
+        app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))
         urls = utils_file_loads.get_unicorex_urls()
         app.log.trace("{} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, urls))
         url = urls.get(request.json.get('system'))
-        
+
         app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
         cert = utils_file_loads.get_unicore_certificate()
         app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
@@ -315,7 +315,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-            
+
         # get properties of job
         for i in range(5):  # @UnusedVariable        
             properties_json = {}
@@ -353,7 +353,7 @@ class Jobs(Resource):
                          request.headers,
                          app.urls)
                 return "", 539
-        
+
 
         # get file directory
         # this will be used in get. Ask it here once and send it to get() afterwards
@@ -383,7 +383,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-                
+
         return "", 201, {'kernelurl': kernelurl,
                          'filedir': filedirectory,
                          'X-UNICORE-SecuritySession': unicore_header.get('X-UNICORE-SecuritySession')}
@@ -407,7 +407,7 @@ class Jobs(Resource):
                                                          app.urls,
                                                          False)
         app.log.trace("{} - Return: {};{};{}".format(uuidcode, accesstoken, expire, security_session))
-        
+
         return "", 200, {'accesstoken': accesstoken,
                          'expire': str(expire),
                          'X-UNICORE-SecuritySession': security_session}
