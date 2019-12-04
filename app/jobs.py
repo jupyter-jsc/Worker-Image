@@ -133,7 +133,7 @@ class Jobs(Resource):
         # get the 'real' status of the job from the files in the working_directory
         # 'real' means: We don't care about Queued, ready, running or something. We just want to know: Is it bad (failed or cancelled) or good (running or spawning)
         status = ''
-        if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING']:
+        if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING', 'STAGINGIN']:
             if '.end' in children or '/.end' in children:
                 # It's not running anymore
                 status = 'stopped'
