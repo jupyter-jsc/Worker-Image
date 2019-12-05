@@ -79,6 +79,7 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     accesstoken, expire = renew_token(app_logger,
                                       uuidcode,
                                       request_headers.get("tokenurl"),
+                                      request_headers.get("authorizeurl"),
                                       request_headers.get("refreshtoken"),
                                       request_headers.get('accesstoken'),
                                       request_headers.get('expire'),
