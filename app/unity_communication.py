@@ -54,4 +54,4 @@ def renew_token(app_logger, uuidcode, refreshtoken, accesstoken, expire, jhubtok
                             expire,
                             username,
                             servername)
-    return accesstoken
+    return accesstoken, expire
