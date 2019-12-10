@@ -24,14 +24,14 @@ class Jobs(Resource):
         uuidcode = request.headers.get('uuidcode', '<no uuidcode>')
         app.log.info("{} - Get Server Status".format(uuidcode))
         app.log.trace("{} - Headers: {}".format(uuidcode, request.headers.to_list()))
-        
+
         # Check for J4J intern token
         validate_auth(app.log,
                       uuidcode,
                       request.headers.get('intern-authorization'))
-        
+
         servername = request.headers.get('servername')
-        
+
         # Create UNICORE header and get certificate
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,     # @UnusedVariable
                                                                           uuidcode,
@@ -128,12 +128,12 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-        
+
 
         # get the 'real' status of the job from the files in the working_directory
         # 'real' means: We don't care about Queued, ready, running or something. We just want to know: Is it bad (failed or cancelled) or good (running or spawning)
         status = ''
-        if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING']:
+        if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING', 'STAGINGIN']:
             if '.end' in children or '/.end' in children:
                 # It's not running anymore
                 status = 'stopped'
@@ -157,7 +157,7 @@ class Jobs(Resource):
                                         cert,
                                         request.headers.get('jhubtoken'),
                                         request.headers.get('escapedusername'),
-                                        servername)                    
+                                        servername)
                 except:
                     app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
                                                                                                                               app.urls.get('tunnel', {}).get('url_tunnel'),
@@ -197,7 +197,7 @@ class Jobs(Resource):
                 status = 'waitforhostname'
             app.log.info("{} - Update JupyterHub status ({})".format(uuidcode, status))
             hub_communication.status(app.log,
-                                     uuidcode, 
+                                     uuidcode,
                                      app.urls.get('hub', {}).get('url_proxy_route'),
                                      app.urls.get('hub', {}).get('url_status'),
                                      request.headers.get('jhubtoken'),
@@ -235,13 +235,9 @@ class Jobs(Resource):
         validate_auth(app.log,
                       uuidcode,
                       request.headers.get('Intern-Authorization'))
-        
-        servername = request.headers.get('servername')
-        # Create Job description and header for unicore job
-        unicore_json = unicore_utils.create_job(app.log,
-                                                uuidcode,
-                                                request.json)
 
+        servername = request.headers.get('servername')
+        # Create header for unicore job
         unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
                                                                           uuidcode,
                                                                           request.headers,
@@ -249,7 +245,7 @@ class Jobs(Resource):
                                                                           app.urls.get('hub', {}).get('url_token'),
                                                                           request.headers.get('escapedusername'),
                                                                           servername)
-        
+
 
         # Create input files for the job. A working J4J_tunnel webservice is required
         try:
@@ -267,12 +263,18 @@ class Jobs(Resource):
                      app.urls)
             return "", 534
 
+        # Create Job description
+        unicore_json = unicore_utils.create_job(app.log,
+                                                uuidcode,
+                                                request.json,
+                                                unicore_input)
+
         # Get URL and certificate to communicate with UNICORE/X
-        app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))        
+        app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))
         urls = utils_file_loads.get_unicorex_urls()
         app.log.trace("{} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, urls))
         url = urls.get(request.json.get('system'))
-        
+
         app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
         cert = utils_file_loads.get_unicore_certificate()
         app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
@@ -313,7 +315,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-            
+
         # get properties of job
         for i in range(5):  # @UnusedVariable        
             properties_json = {}
@@ -351,93 +353,8 @@ class Jobs(Resource):
                          request.headers,
                          app.urls)
                 return "", 539
-        
 
-        # upload input files to job
-        #     Save content type
-        content_type = unicore_header.get('Content-Type', False)
-        unicore_header['Content-Type'] = "application/octet-stream"
-        app.log.info("{} - Upload input files for UNICORE/X Job".format(uuidcode))
-        try:
-            hub_communication.status(app.log,
-                                     uuidcode,
-                                     app.urls.get('hub', {}).get('url_proxy_route'),
-                                     app.urls.get('hub', {}).get('url_status'),
-                                     request.headers.get('jhubtoken'),
-                                     'uploadfiles',
-                                     request.headers.get('escapedusername'),
-                                     servername)
-        except:
-            app.log.warning("{} - Could not update status for JupyterHub".format(uuidcode))
-        for inp in unicore_input:
-            try:
-                method = "PUT"
-                method_args = {"url": properties_json['_links']['workingDirectory']['href']+"/files/"+inp.get('To'),
-                               "headers": unicore_header,
-                               "data": inp.get('Data'),
-                               "certificate": cert}
-                text, status_code, response_header = unicore_communication.request(app.log,
-                                                                                   uuidcode,
-                                                                                   method,
-                                                                                   method_args)
-                if status_code != 204:
-                    app.log.warning("{} - Could not upload file. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                    raise Exception("{} - Could not upload file. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
-                else:
-                    unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-            except:
-                app.log.exception("{} - Could not upload input file {}. {} {}".format(uuidcode, inp.get('To', '<unknown input file>'), method, remove_secret(method_args)))
-                app.log.warning("{} - UNICORE/X input dict: {}".format(uuidcode, unicore_input))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers,
-                         app.urls)
-                return "", 539
-        if content_type:
-            unicore_header['Content-Type'] = content_type
-        else:
-            del unicore_header['Content-Type']
 
-        try:
-            hub_communication.status(app.log,
-                                     uuidcode, 
-                                     app.urls.get('hub', {}).get('url_proxy_route'),
-                                     app.urls.get('hub', {}).get('url_status'),
-                                     request.headers.get('jhubtoken'),
-                                     'jobstarted',
-                                     request.headers.get('escapedusername'),
-                                     servername)
-        except:
-            app.log.warning("{} - Could not update status for JupyterHub".format(uuidcode))
-        # start job by Post to action:start link
-        try:
-            method = "POST"
-            method_args = {"url": properties_json['_links']['action:start']['href'],
-                           "headers": unicore_header,
-                           "data": "{}",
-                           "certificate": cert}
-            app.log.info("{} - Start UNICORE/X Job".format(uuidcode))
-            text, status_code, response_header = unicore_communication.request(app.log,
-                                                                               uuidcode,
-                                                                               method,
-                                                                               method_args)
-            if status_code != 200:
-                app.log.warning("{} - Could not start job. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                raise Exception("{} - Could not start job. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
-            else:
-                unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-        except:
-            app.log.exception("{} - Could not start job. {} {}".format(uuidcode, method, remove_secret(method_args)))
-            app.log.trace("{} - Call stop_job".format(uuidcode))
-            stop_job(app.log,
-                     uuidcode,
-                     servername,
-                     request.headers,
-                     app.urls)
-            return "", 539
-        
         # get file directory
         # this will be used in get. Ask it here once and send it to get() afterwards
         filedirectory = ""
@@ -466,7 +383,7 @@ class Jobs(Resource):
                      request.headers,
                      app.urls)
             return "", 539
-                
+
         return "", 201, {'kernelurl': kernelurl,
                          'filedir': filedirectory,
                          'X-UNICORE-SecuritySession': unicore_header.get('X-UNICORE-SecuritySession')}
@@ -490,7 +407,7 @@ class Jobs(Resource):
                                                          app.urls,
                                                          False)
         app.log.trace("{} - Return: {};{};{}".format(uuidcode, accesstoken, expire, security_session))
-        
+
         return "", 200, {'accesstoken': accesstoken,
                          'expire': str(expire),
                          'X-UNICORE-SecuritySession': security_session}

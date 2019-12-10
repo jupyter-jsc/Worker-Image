@@ -78,6 +78,8 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     app_logger.debug("{} - Create UNICORE/X Header".format(uuidcode))
     accesstoken, expire = renew_token(app_logger,
                                       uuidcode,
+                                      request_headers.get("tokenurl"),
+                                      request_headers.get("authorizeurl"),
                                       request_headers.get("refreshtoken"),
                                       request_headers.get('accesstoken'),
                                       request_headers.get('expire'),
@@ -99,15 +101,25 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     return unicore_header, accesstoken, expire
 
 # Create Job Dict
-def create_job(app_logger, uuidcode, request_json):
+def create_job(app_logger, uuidcode, request_json, unicore_input):
     app_logger.debug("{} - Create UNICORE/X Job.".format(uuidcode))
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
-           'haveClientStageIn': 'true'}
+           'Imports': []}
+
+    for inp in unicore_input:
+        job['Imports'].append(
+            {
+                "From": "inline://dummy",
+                "To"  : inp.get('To'),
+                "Data": inp.get('Data'),
+            }
+        )
 
     if request_json.get('partition') == 'LoginNode':
         job['Environment']['UC_PREFER_INTERACTIVE_EXECUTION'] = 'true'
         job['Executable'] = 'bash .start.sh'
+        app_logger.trace("{} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
     if request_json.get('system').upper() != 'JURON':
         job['Resources'] = { 'Queue': request_json.get('partition')}
