@@ -26,12 +26,15 @@ def stop_job(app_logger, uuidcode, servername, request_headers, app_urls, send_c
 
     # Get logs from the UNICORE workspace. Necessary for support
     app_logger.debug("{} - Copy_log".format(uuidcode))
-    unicore_utils.copy_log(app_logger,
-                           uuidcode,
-                           unicore_header,
-                           request_headers.get('filedir'),
-                           request_headers.get('kernelurl'),
-                           cert)
+    try:
+        unicore_utils.copy_log(app_logger,
+                               uuidcode,
+                               unicore_header,
+                               request_headers.get('filedir'),
+                               request_headers.get('kernelurl'),
+                               cert)
+    except:
+        app_logger.exception("{} - Could not copy log.".format(uuidcode))
 
     # Abort the Job via UNICORE
     app_logger.debug("{} - Abort Job".format(uuidcode))
