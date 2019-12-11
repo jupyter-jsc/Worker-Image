@@ -267,6 +267,7 @@ class Jobs(Resource):
         unicore_json = unicore_utils.create_job(app.log,
                                                 uuidcode,
                                                 request.json,
+                                                request.headers.get('Project'),
                                                 unicore_input)
 
         # Get URL and certificate to communicate with UNICORE/X

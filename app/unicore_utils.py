@@ -101,11 +101,12 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     return unicore_header, accesstoken, expire
 
 # Create Job Dict
-def create_job(app_logger, uuidcode, request_json, unicore_input):
+def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("{} - Create UNICORE/X Job.".format(uuidcode))
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
-           'Imports': []}
+           'Imports': [],
+           'Project': project}
 
     for inp in unicore_input:
         job['Imports'].append(
