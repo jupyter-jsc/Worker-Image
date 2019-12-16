@@ -16,9 +16,9 @@ from app.utils import remove_secret
 
 
 def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, accesstoken, expire, jhubtoken, app_hub_url_proxy_route, app_hub_url_token, username, servername=''):
-    if int(expire) - time.time() > 60:
+    if int(expire) - int(time.time()) > 60:
         return accesstoken, expire
-    app_logger.info("{} - Renew Token".format(uuidcode))
+    app_logger.info("{} - Renew Token: Expire at {} , time: {}".format(uuidcode, int(expire), int(time.time())))
     unity = get_unity()
     if token_url == '':
         app_logger.warning("{} - Use default token_url. Please send token_url in header".format(uuidcode))
