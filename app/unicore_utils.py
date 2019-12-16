@@ -105,8 +105,8 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("{} - Create UNICORE/X Job.".format(uuidcode))
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
-           'Imports': [],
-           'Project': project}
+           'Imports': []}
+    #       'Project': project}
 
     for inp in unicore_input:
         job['Imports'].append(
