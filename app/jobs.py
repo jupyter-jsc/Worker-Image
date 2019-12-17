@@ -134,7 +134,10 @@ class Jobs(Resource):
         # 'real' means: We don't care about Queued, ready, running or something. We just want to know: Is it bad (failed or cancelled) or good (running or spawning)
         status = ''
         if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING', 'STAGINGIN']:
-            if '.end' in children or '/.end' in children:
+            if len(children) == 0:
+                app.log.info("{} - UNICORE/X sent empty children list. Do nothing and hope for the next get call".format(uuidcode))
+                return "", 200
+            elif '.end' in children or '/.end' in children:
                 # It's not running anymore
                 status = 'stopped'
             elif '.tunnel' in children or '/.tunnel' in children:
