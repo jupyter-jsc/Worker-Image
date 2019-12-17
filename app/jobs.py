@@ -100,44 +100,55 @@ class Jobs(Resource):
         # The Job is not finished yet (good)
         # Get Files in the filedir
         children = []
-        try:
-            method = "GET"
-            method_args = {"url": request.headers.get('filedir'),
-                           "headers": unicore_header,
-                           "certificate": cert}
-            app.log.info("{} - Get list of files of UNICORE/X Job {}".format(uuidcode, kernelurl))
-            text, status_code, response_header = unicore_communication.request(app.log,
-                                                                               uuidcode,
-                                                                               method,
-                                                                               method_args)
-            if status_code == 200:
-                unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-                children = json.loads(text).get('children', [])
-            elif status_code == 404:
-                app.log.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+        for i in range(5):  # @UnusedVariable
+            try:
+                method = "GET"
+                method_args = {"url": request.headers.get('filedir'),
+                               "headers": unicore_header,
+                               "certificate": cert}
+                app.log.info("{} - Get list of files of UNICORE/X Job {}".format(uuidcode, kernelurl))
+                text, status_code, response_header = unicore_communication.request(app.log,
+                                                                                   uuidcode,
+                                                                                   method,
+                                                                                   method_args)
+                if status_code == 200:
+                    unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
+                    children = json.loads(text).get('children', [])
+                    if len(children) == 0 and i < 4 and request.headers.get('spawning', 'true').lower() == 'true':
+                        app.log.debug("{} - Received empty children list. Try again in 2 seconds".format(uuidcode))
+                        sleep(2)
+                    else:
+                        break
+                elif status_code == 404:
+                    if i < 4:
+                        app.log.debug("{} - Could not get children list. 404 Not found. Try again in 2 seconds.".format(uuidcode))
+                        sleep(2)
+                    else:
+                        app.log.warning("{} - Could not get children list. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        return "", 539
+                else:
+                    if i < 4:
+                        app.log.debug("{} - Could not get children list. Try again in 2 seconds".format(uuidcode))
+                        sleep(2)
+                    else:
+                        app.log.warning("{} - Could not get information about filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        raise Exception("{} - Could not get information about filedirectory. Throw Exception because of wrong status_code: {}".format(uuidcode, status_code))
+            except:
+                app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                app.log.trace("{} - Call stop_job".format(uuidcode))
+                stop_job(app.log,
+                         uuidcode,
+                         servername,
+                         request.headers,
+                         app.urls)
                 return "", 539
-            else:
-                app.log.warning("{} - Could not get information about filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                raise Exception("{} - Could not get information about filedirectory. Throw Exception because of wrong status_code: {}".format(uuidcode, status_code))
-        except:
-            app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
-            app.log.trace("{} - Call stop_job".format(uuidcode))
-            stop_job(app.log,
-                     uuidcode,
-                     servername,
-                     request.headers,
-                     app.urls)
-            return "", 539
 
 
         # get the 'real' status of the job from the files in the working_directory
         # 'real' means: We don't care about Queued, ready, running or something. We just want to know: Is it bad (failed or cancelled) or good (running or spawning)
         status = ''
         if properties_json.get('status') in ['QUEUED', 'READY', 'RUNNING', 'STAGINGIN']:
-            if len(children) == 0:
-                app.log.info("{} - UNICORE/X sent empty children list. Do nothing and hope for the next get call".format(uuidcode))
-                return "", 200
-            elif '.end' in children or '/.end' in children:
+            if '.end' in children or '/.end' in children:
                 # It's not running anymore
                 status = 'stopped'
             elif '.tunnel' in children or '/.tunnel' in children:
