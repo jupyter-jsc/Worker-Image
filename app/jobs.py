@@ -73,6 +73,15 @@ class Jobs(Resource):
                     else:
                         app.log.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                         return "", 539
+                elif status_code == 500:
+                    if i < 4:
+                        app.log.debug("{} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
+                        sleep(2)
+                    else:
+                        app.log.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        app.log.warning("{} - Do not send update to JupyterHub.".format(uuidcode))
+                        # If JupyterHub don't receives an update for a long time it can stop the job itself.
+                        return "", 539
                 else:
                     if i < 4:
                         app.log.debug("{} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
