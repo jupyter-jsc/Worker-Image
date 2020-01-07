@@ -124,7 +124,7 @@ class Jobs(Resource):
                     if status_code == 200:
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                         children = json.loads(text).get('children', [])
-                        if len(children) == 0 and i < 4 and request.headers.get('spawning', 'true').lower() == 'true':
+                        if len(children) == 0 and i < 4:
                             app.log.debug("{} - Received empty children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
