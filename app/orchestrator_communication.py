@@ -24,6 +24,20 @@ def set_spawning(app_logger, uuidcode, orchestrator_url, servername, value):
             return
         raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))
 
+def set_skip(app_logger, uuidcode, orchestrator_url, servername, value):
+    app_logger.debug("{} - Call Orchestrator to set skip for servername {} (value: {})".format(uuidcode, servername, value))
+    header = { 'Intern-Authorization': get_j4j_orchestrator_token(),
+               'uuidcode': uuidcode }
+    data_json = { 'servername': servername,
+                  'value': value }
+    with closing(requests.post(orchestrator_url,
+                               headers=header,
+                               json = data_json)) as r:
+        if r.status_code == 202:
+            return
+        raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))
+
+
 def delete_database_entry(app_logger, uuidcode, orchestrator_url, servername):
     app_logger.debug("{} - Call Orchestrator to delete database entry for servername {}".format(uuidcode, servername))
     header = { 'Intern-Authorization': get_j4j_orchestrator_token(),
