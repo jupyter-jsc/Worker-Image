@@ -72,7 +72,17 @@ class Jobs(Resource):
                             app.log.debug("{} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.warning("{} - Could not get properties. 404 Not found. Stop Job and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                                'False')
+                            stop_job(app.log,
+                                     uuidcode,
+                                     servername,
+                                     request.headers,
+                                     app.urls)
                             return "", 539
                     elif status_code == 500:
                         if i < 4:
@@ -82,6 +92,11 @@ class Jobs(Resource):
                             app.log.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             app.log.warning("{} - Do not send update to JupyterHub.".format(uuidcode))
                             # If JupyterHub don't receives an update for a long time it can stop the job itself.
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                                'False')
                             return "", 539
                     else:
                         if i < 4:
@@ -94,12 +109,22 @@ class Jobs(Resource):
                     app.log.exception("{} - Could not get properties. JupyterLab will be still running. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.warning("{} - Do not send update to JupyterHub.".format(uuidcode))
                     # If JupyterHub don't receives an update for a long time it can stop the job itself.
+                    orchestrator_communication.set_skip(app.log,
+                                                        uuidcode,
+                                                        app.urls.get('orchestrator', {}).get('url_skip'),
+                                                        request.headers.get('servername'),
+                                                        'False')
                     return "", 539
     
             if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
                 # Job is Finished for UNICORE, so it should be for JupyterHub
                 app.log.warning('{} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
                 app.log.trace("{} - Call stop_job".format(uuidcode))
+                orchestrator_communication.set_skip(app.log,
+                                                    uuidcode,
+                                                    app.urls.get('orchestrator', {}).get('url_skip'),
+                                                    request.headers.get('servername'),
+                                                    'False')
                 stop_job(app.log,
                          uuidcode,
                          servername,
@@ -134,7 +159,12 @@ class Jobs(Resource):
                             app.log.debug("{} - Could not get children list. 404 Not found. Try again in 2 seconds.".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get children list. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.error("{} - Could not get children list. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                                'False')
                             return "", 539
                     else:
                         if i < 4:
@@ -146,6 +176,11 @@ class Jobs(Resource):
                 except:
                     app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.trace("{} - Call stop_job".format(uuidcode))
+                    orchestrator_communication.set_skip(app.log,
+                                                        uuidcode,
+                                                        app.urls.get('orchestrator', {}).get('url_skip'),
+                                                        request.headers.get('servername'),
+                                                        'False')
                     stop_job(app.log,
                              uuidcode,
                              servername,
@@ -195,6 +230,11 @@ class Jobs(Resource):
                                                                                                                                   cert,
                                                                                                                                   '<secret>'))
                         app.log.trace("{} - Call stop_job".format(uuidcode))
+                        orchestrator_communication.set_skip(app.log,
+                                                            uuidcode,
+                                                            app.urls.get('orchestrator', {}).get('url_skip'),
+                                                            request.headers.get('servername'),
+                                                            'False')
                         stop_job(app.log,
                                  uuidcode,
                                  servername,
