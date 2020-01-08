@@ -26,7 +26,7 @@ def remove_secret(json_dict):
     for key, value in json_dict.items():
         if type(value) == dict:
             secret_dict[key] = remove_secret(value)
-        elif key.lower() in ["authorization", "accesstoken", "refreshtoken", "jhubtoken"]:
+        elif key.lower() in ["authorization", "accesstoken", "refreshtoken", "jhubtoken", "intern-authorization"]:
             secret_dict[key] = '<secret>'
         else:
             secret_dict[key] = value

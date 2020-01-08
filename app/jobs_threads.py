@@ -51,6 +51,11 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                         app_logger.debug("{} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
                         time.sleep(2)
                     else:
+                        orchestrator_communication.set_skip(app_logger,
+                                                            uuidcode,
+                                                            app_urls.get('orchestrator', {}).get('url_skip'),
+                                                            request_headers.get('servername'),
+                                                            'False')
                         app_logger.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                         return "", 539
                 else:
@@ -61,6 +66,11 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                         app_logger.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                         raise Exception("{} - Could not get properties. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
             except:
+                orchestrator_communication.set_skip(app_logger,
+                                                    uuidcode,
+                                                    app_urls.get('orchestrator', {}).get('url_skip'),
+                                                    request_headers.get('servername'),
+                                                    'False')
                 app_logger.exception("{} - Could not get properties. Try to stop it {} {}".format(uuidcode, method, remove_secret(method_args)))
                 app_logger.trace("{} - Call stop_job".format(uuidcode))
                 stop_job(app_logger,
@@ -72,6 +82,11 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
 
         if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
             # Job is Finished for UNICORE, so it should be for JupyterHub
+            orchestrator_communication.set_skip(app_logger,
+                                                uuidcode,
+                                                app_urls.get('orchestrator', {}).get('url_skip'),
+                                                request_headers.get('servername'),
+                                                'False')
             app_logger.warning('{} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
             app_logger.trace("{} - Call stop_job".format(uuidcode))
             stop_job(app_logger,
@@ -94,6 +109,11 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                 children = json.loads(text).get('children', [])
             elif status_code == 404:
+                orchestrator_communication.set_skip(app_logger,
+                                                    uuidcode,
+                                                    app_urls.get('orchestrator', {}).get('url_skip'),
+                                                    request_headers.get('servername'),
+                                                    'False')
                 app_logger.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                 return "", 539
             else:
@@ -141,6 +161,11 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                     request_headers.get('escapedusername'),
                                     servername)
             except:
+                orchestrator_communication.set_skip(app_logger,
+                                                    uuidcode,
+                                                    app_urls.get('orchestrator', {}).get('url_skip'),
+                                                    request_headers.get('servername'),
+                                                    'False')
                 app_logger.exception("{} - Could not create tunnel".format(uuidcode))
                 app_logger.trace("{} - Call stop_job".format(uuidcode))
                 stop_job(app_logger,
@@ -180,4 +205,9 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                         'False')
             except:
                 app_logger.exception("{} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
+        orchestrator_communication.set_skip(app_logger,
+                                            uuidcode,
+                                            app_urls.get('orchestrator', {}).get('url_skip'),
+                                            request_headers.get('servername'),
+                                            'False')
         return
