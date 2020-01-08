@@ -2,6 +2,9 @@ from app import unicore_utils, utils_file_loads, tunnel_communication, hub_commu
 
 def stop_job(app_logger, uuidcode, servername, request_headers, app_urls, send_cancel=True):
     app_logger.trace("{} - Create UNICORE Header".format(uuidcode))
+    if ':' not in servername:
+        servername = "{}:{}".format(request_headers.get('escapedusername'), servername)
+    
     unicore_header, accesstoken, expire = unicore_utils.create_header(app_logger,
                                                                       uuidcode,
                                                                       request_headers,
