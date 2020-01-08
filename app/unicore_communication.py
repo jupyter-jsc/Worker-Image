@@ -16,7 +16,7 @@ def request(app_logger, uuidcode, method, method_args):
         with closing(requests.get(method_args.get("url"),
                                   headers=method_args.get("headers", {}),
                                   verify=method_args.get("certificate", False),
-                                  timeout=10)) as r:
+                                  timeout=180)) as r:
             if r.status_code != 432 and r.status_code != 500: # 432 -> SecuritySession expired. 500 -> Internal Server Error, maybe GPFS made bs?
                 if 'return_content' in method_args:
                     app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r.status_code))
@@ -36,7 +36,7 @@ def request(app_logger, uuidcode, method, method_args):
         with closing(requests.get(method_args.get("url"),
                                   headers=method_args.get("headers", {}),
                                   verify=method_args.get("certificate", False),
-                                  timeout=10)) as r2:
+                                  timeout=180)) as r2:
             if 'return_content' in method_args:
                 app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r2.status_code))
                 app_logger.trace("{} - UNICORE/X communication response Content: {}".format(uuidcode, r2.content.decode("utf-8")))
@@ -54,7 +54,7 @@ def request(app_logger, uuidcode, method, method_args):
                                      headers=method_args.get("headers", {}),
                                      data=method_args.get("data", "{}"),
                                      verify=method_args.get("certificate", False),
-                                     timeout=10)) as r:
+                                     timeout=180)) as r:
             if r.status_code != 432 and r.status_code != 500: # 432 -> SecuritySession expired. 500 -> Internal Server Error, maybe GPFS made bs?
                 if 'return_content' in method_args:
                     app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r.status_code))
@@ -75,7 +75,7 @@ def request(app_logger, uuidcode, method, method_args):
                                      headers=method_args.get("headers", {}),
                                      data=method_args.get("data", "{}"),
                                      verify=method_args.get("certificate", False),
-                                     timeout=10)) as r2:
+                                     timeout=180)) as r2:
             if 'return_content' in method_args:
                 app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r2.status_code))
                 app_logger.trace("{} - UNICORE/X communication response Content: {}".format(uuidcode, r2.content.decode("utf-8")))
@@ -91,7 +91,7 @@ def request(app_logger, uuidcode, method, method_args):
                                    headers=method_args.get("headers"),
                                    data=method_args.get("data", "{}"),
                                    verify=method_args.get("certificate", False),
-                                   timeout=10)) as r:
+                                   timeout=180)) as r:
             if r.status_code != 432 and r.status_code != 500: # 432 -> SecuritySession expired. 500 -> Internal Server Error, maybe GPFS made bs?
                 if 'return_content' in method_args:
                     app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r.status_code))
@@ -112,7 +112,7 @@ def request(app_logger, uuidcode, method, method_args):
                                    headers=method_args.get("headers", {}),
                                    data=method_args.get("data", "{}"),
                                    verify=method_args.get("certificate", False),
-                                   timeout=10)) as r2:
+                                   timeout=180)) as r2:
             if 'return_content' in method_args:
                 app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r2.status_code))
                 app_logger.trace("{} - UNICORE/X communication response Content: {}".format(uuidcode, r2.content.decode("utf-8")))
@@ -128,7 +128,7 @@ def request(app_logger, uuidcode, method, method_args):
                                   headers=method_args.get("headers"),
                                   data=method_args.get("data", "{}"),
                                   verify=method_args.get("certificate", False),
-                                  timeout=10)) as r:
+                                  timeout=180)) as r:
             if r.status_code != 432 and r.status_code != 500: # 432 -> SecuritySession expired. 500 -> Internal Server Error, maybe GPFS made bs?
                 if 'return_content' in method_args:
                     app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r.status_code))
@@ -149,7 +149,7 @@ def request(app_logger, uuidcode, method, method_args):
                                   headers=method_args.get("headers", {}),
                                   data=method_args.get("data", "{}"),
                                   verify=method_args.get("certificate", False),
-                                  timeout=10)) as r2:
+                                  timeout=180)) as r2:
             if 'return_content' in method_args:
                 app_logger.trace("{} - UNICORE/X communication response Status code: {}".format(uuidcode, r2.status_code))
                 app_logger.trace("{} - UNICORE/X communication response Content: {}".format(uuidcode, r2.content.decode("utf-8")))
