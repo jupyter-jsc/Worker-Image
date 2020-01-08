@@ -110,7 +110,7 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
                                    json = hub_json,
                                    verify = False,
                                    timeout = 60)) as r:
-            if r.status_code == 201
+            if r.status_code == 201:
                 app_logger.trace("{} - Status Update successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return
             elif r.status_code == 503:
