@@ -28,7 +28,8 @@ def remove_proxy_route(app_logger, uuidcode, app_hub_url_proxy_route, jhubtoken,
         for i in range(0, 10):
             with closing(requests.delete(url,
                                          headers = hub_header,
-                                         verify = False)) as r:
+                                         verify = False,
+                                         timeout = 10)) as r:
                 if r.status_code == 200:
                     app_logger.info("{} - Proxy route deletion successful".format(uuidcode))
                     return True
@@ -60,7 +61,8 @@ def token(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_token, jhub
         with closing(requests.post(url,
                                    headers = hub_header,
                                    json = hub_json,
-                                   verify = False)) as r:
+                                   verify = False,
+                                   timeout = 10)) as r:
             if r.status_code == 201:
                 app_logger.trace("{} - Token Update successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return
@@ -75,7 +77,8 @@ def token(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_token, jhub
                 with closing(requests.post(url,
                                            headers = hub_header,
                                            json = hub_json,
-                                           verify = False)) as r2:
+                                           verify = False,
+                                           timeout = 10)) as r2:
                     if r2.status_code == 201:
                         app_logger.trace("{} - Token Update successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return
@@ -105,7 +108,8 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
         with closing(requests.post(url,
                                    headers = hub_header,
                                    json = hub_json,
-                                   verify = False)) as r:
+                                   verify = False,
+                                   timeout = 10)) as r:
             if r.status_code == 201:
                 app_logger.trace("{} - Status Update successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return
@@ -120,7 +124,8 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
                 with closing(requests.post(url,
                                            headers = hub_header,
                                            json = hub_json,
-                                           verify = False)) as r2:
+                                           verify = False,
+                                           timeout = 10)) as r2:
                     if r2.status_code == 201:
                         app_logger.trace("{} - Status Update successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return
@@ -148,7 +153,8 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
         app_logger.trace("{} - Cancel JupyterHub: {} {}".format(uuidcode, url, hub_header))
         with closing(requests.delete(url,
                                      headers = hub_header, 
-                                     verify = False)) as r:
+                                     verify = False,
+                                     timeout = 10)) as r:
             if r.status_code == 202:
                 app_logger.trace("{} - Cancel successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return        
@@ -162,7 +168,8 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
                 # try again
                 with closing(requests.delete(url,
                                              headers = hub_header,
-                                             verify = False)) as r2:
+                                             verify = False,
+                                             timeout = 10)) as r2:
                     if r2.status_code == 202:
                         app_logger.trace("{} - Cancel successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return

@@ -116,7 +116,7 @@ class FlaskApp(Flask):
         self.log.info("StartUp - Check if ssh service is running")
         while True:
             try:
-                with closing(requests.get(health_url, headers={}, verify=False)) as r:
+                with closing(requests.get(health_url, headers={}, verify=False, timeout=5)) as r:
                     if r.status_code == 200:
                         self.log.debug("StartUp - J4J_Tunnel answered with 200")
                         break

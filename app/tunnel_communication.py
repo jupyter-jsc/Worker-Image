@@ -23,7 +23,8 @@ def get_remote_node(app_logger, uuidcode, tunnel_url_remote, nodelist):
             app_logger.info("{} - Get J4J_Tunnel {}".format(uuidcode, tunnel_url_remote))
             with closing(requests.get(tunnel_url_remote,
                                       params = { 'node': nodelist[i] },
-                                      headers = header)) as r:
+                                      headers = header,
+                                      timeout = 10)) as r:
                 if r.status_code == 217:
                     app_logger.trace("{} - Use {} as remote node".format(uuidcode, nodelist[i]))
                     return nodelist[i]
@@ -55,7 +56,8 @@ def j4j_start_remote_tunnel(app_logger, uuidcode, tunnel_url_remote, node, h):
     app_logger.info("{} - Post J4J_Tunnel remote {}".format(uuidcode, tunnel_url_remote))
     with closing(requests.post(tunnel_url_remote,
                                headers = h,
-                               json = {'node': node})) as r:
+                               json = {'node': node},
+                               timeout = 10)) as r:
         if r.status_code == 217:
             return
         raise Exception("{} - Could not start remote tunnel: {} {}".format(uuidcode, r.text, r.status_code))
@@ -64,7 +66,8 @@ def j4j_start_tunnel(app_logger, uuidcode, tunnel_url, h, data):
     app_logger.info("{} - Post J4J_Tunnel {}".format(uuidcode, tunnel_url))
     with closing(requests.post(tunnel_url,
                                headers = h,
-                               json = data)) as r:
+                               json = data,
+                               timeout = 10)) as r:
         if r.status_code == 201:
             return
         raise Exception("{} - Could not start tunnel: {} {}".format(uuidcode, r.text, r.status_code))
@@ -79,7 +82,8 @@ def close(app_logger, uuidcode, hub_tunnel_url, tunnel_info):
     app_logger.info("{} - Delete J4J_Tunnel {}".format(uuidcode, hub_tunnel_url))
     with closing(requests.delete(hub_tunnel_url,
                                  params = tunnel_info,
-                                 headers = tunnel_header)) as r:
+                                 headers = tunnel_header,
+                                 timeout = 10)) as r:
         if r.status_code == 204 or r.status_code == 200:
             return
         raise Exception("{} - Could not stop tunnel: {} {}".format(uuidcode, r.text, r.status_code))
