@@ -24,7 +24,7 @@ def get_remote_node(app_logger, uuidcode, tunnel_url_remote, nodelist):
             with closing(requests.get(tunnel_url_remote,
                                       params = { 'node': nodelist[i] },
                                       headers = header,
-                                      timeout = 60)) as r:
+                                      timeout = 1800)) as r:
                 if r.status_code == 217:
                     app_logger.trace("{} - Use {} as remote node".format(uuidcode, nodelist[i]))
                     return nodelist[i]
@@ -57,7 +57,7 @@ def j4j_start_remote_tunnel(app_logger, uuidcode, tunnel_url_remote, node, h):
     with closing(requests.post(tunnel_url_remote,
                                headers = h,
                                json = {'node': node},
-                               timeout = 60)) as r:
+                               timeout = 1800)) as r:
         if r.status_code == 217:
             return
         raise Exception("{} - Could not start remote tunnel: {} {}".format(uuidcode, r.text, r.status_code))
@@ -67,7 +67,7 @@ def j4j_start_tunnel(app_logger, uuidcode, tunnel_url, h, data):
     with closing(requests.post(tunnel_url,
                                headers = h,
                                json = data,
-                               timeout = 60)) as r:
+                               timeout = 1800)) as r:
         if r.status_code == 201:
             return
         raise Exception("{} - Could not start tunnel: {} {}".format(uuidcode, r.text, r.status_code))
@@ -83,7 +83,7 @@ def close(app_logger, uuidcode, hub_tunnel_url, tunnel_info):
     with closing(requests.delete(hub_tunnel_url,
                                  params = tunnel_info,
                                  headers = tunnel_header,
-                                 timeout = 60)) as r:
+                                 timeout = 1800)) as r:
         if r.status_code == 204 or r.status_code == 200:
             return
         raise Exception("{} - Could not stop tunnel: {} {}".format(uuidcode, r.text, r.status_code))

@@ -40,13 +40,13 @@ def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, ac
                                    headers = headers,
                                    data = data,
                                    verify = cert_path,
-                                   timeout = 120)) as r:
+                                   timeout = 1800)) as r:
             app_logger.trace("{} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
             accesstoken = r.json().get('access_token')
         with closing(requests.get(tokeninfo_url,
                                   headers = { 'Authorization': 'Bearer {}'.format(accesstoken) },
                                   verify = cert_path,
-                                  timeout = 120)) as r:
+                                  timeout = 1800)) as r:
             app_logger.trace("{} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
             expire = r.json().get('exp')
     except:
