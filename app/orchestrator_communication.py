@@ -20,7 +20,7 @@ def set_spawning(app_logger, uuidcode, orchestrator_url, servername, value):
     with closing(requests.post(orchestrator_url,
                                headers=header,
                                json = data_json,
-                               timeout = 60)) as r:
+                               timeout = 1800)) as r:
         if r.status_code == 202:
             return
         raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))
@@ -34,7 +34,7 @@ def set_skip(app_logger, uuidcode, orchestrator_url, servername, value):
     with closing(requests.post(orchestrator_url,
                                headers=header,
                                json = data_json,
-                               timeout = 60)) as r:
+                               timeout = 1800)) as r:
         if r.status_code == 202:
             return
         raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))
@@ -48,7 +48,7 @@ def delete_database_entry(app_logger, uuidcode, orchestrator_url, servername):
     with closing(requests.delete(orchestrator_url,
                                  headers=header,
                                  data="{}",
-                                 timeout = 60)) as r:
+                                 timeout = 1800)) as r:
         if r.status_code == 200 or r.status_code == 204:
             return
         raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))

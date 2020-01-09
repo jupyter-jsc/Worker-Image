@@ -29,7 +29,7 @@ def remove_proxy_route(app_logger, uuidcode, app_hub_url_proxy_route, jhubtoken,
             with closing(requests.delete(url,
                                          headers = hub_header,
                                          verify = False,
-                                         timeout = 60)) as r:
+                                         timeout = 1800)) as r:
                 if r.status_code == 200:
                     app_logger.info("{} - Proxy route deletion successful".format(uuidcode))
                     return True
@@ -37,6 +37,8 @@ def remove_proxy_route(app_logger, uuidcode, app_hub_url_proxy_route, jhubtoken,
                     app_logger.info("{} - Proxy route deletion status_code 503. Try again (Try {}/10)".format(uuidcode, i+1))
                 else:
                     raise Exception("{} - Could not remove proxy route for server_name {}: {} {}".format(uuidcode, server_name, r.text, r.status_code))
+    except requests.exceptions.ConnectTimeout:
+        app_logger.exception("{} - Timeout reached (1800). Could not remove routes from proxy via JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))   
     except:
         app_logger.exception("{} - Could not remove routes from proxy via JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
 
@@ -62,7 +64,7 @@ def token(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_token, jhub
                                    headers = hub_header,
                                    json = hub_json,
                                    verify = False,
-                                   timeout = 60)) as r:
+                                   timeout = 1800)) as r:
             if r.status_code == 201:
                 app_logger.trace("{} - Token Update successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return
@@ -78,7 +80,7 @@ def token(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_token, jhub
                                            headers = hub_header,
                                            json = hub_json,
                                            verify = False,
-                                           timeout = 60)) as r2:
+                                           timeout = 1800)) as r2:
                     if r2.status_code == 201:
                         app_logger.trace("{} - Token Update successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return
@@ -86,6 +88,8 @@ def token(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_token, jhub
                         app_logger.warning("{} - Token Update sent wrong status_code: {} {} {}".format(uuidcode, r2.text, r2.status_code, remove_secret(r2.headers)))
             else:
                 app_logger.warning("{} - Token Update sent wrong status_code: {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers)))
+    except requests.exceptions.ConnectTimeout:
+        app_logger.exception("{} - Timeout reached (1800). Could not send update token to JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
     except:
         app_logger.exception("{} - Could not send update token to JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
     
@@ -109,7 +113,7 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
                                    headers = hub_header,
                                    json = hub_json,
                                    verify = False,
-                                   timeout = 60)) as r:
+                                   timeout = 1800)) as r:
             if r.status_code == 201:
                 app_logger.trace("{} - Status Update successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return
@@ -125,7 +129,7 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
                                            headers = hub_header,
                                            json = hub_json,
                                            verify = False,
-                                           timeout = 60)) as r2:
+                                           timeout = 1800)) as r2:
                     if r2.status_code == 201:
                         app_logger.trace("{} - Status Update successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return
@@ -133,6 +137,8 @@ def status(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_status, jh
                         app_logger.info("{} - JupyterHub doesn't know the spawner.".format(uuidcode))
             elif r.status_code == 404:
                 app_logger.info("{} - JupyterHub doesn't know the spawner.".format(uuidcode))
+    except requests.exceptions.ConnectTimeout:
+        app_logger.exception("{} - Timeout reached (1800). Could not send status update to JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
     except:
         app_logger.exception("{} - Could not send status update to JupyterHub. Url: {} Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
 
@@ -154,7 +160,7 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
         with closing(requests.delete(url,
                                      headers = hub_header, 
                                      verify = False,
-                                     timeout = 60)) as r:
+                                     timeout = 1800)) as r:
             if r.status_code == 202:
                 app_logger.trace("{} - Cancel successful: {} {} {}".format(uuidcode, r.text, r.status_code, r.headers))
                 return        
@@ -169,7 +175,7 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
                 with closing(requests.delete(url,
                                              headers = hub_header,
                                              verify = False,
-                                             timeout = 60)) as r2:
+                                             timeout = 1800)) as r2:
                     if r2.status_code == 202:
                         app_logger.trace("{} - Cancel successful: {} {} {}".format(uuidcode, r2.text, r2.status_code, r2.headers))
                         return
@@ -177,5 +183,7 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
                         app_logger.warning("{} - JupyterHub.cancel sent wrong status_code: {} {} {}".format(uuidcode, r2.text, r2.status_code, remove_secret(r2.headers)))
             else:
                 app_logger.warning("{} - JupyterHub.cancel sent wrong status_code: {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers)))
+    except requests.exceptions.ConnectTimeout:
+        app_logger.exception("{} - Timeout reached (1800). Could not send cancel to JupyterHub. Url: {}, Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
     except:
         app_logger.exception("{} - Could not send cancel to JupyterHub. Url: {}, Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
