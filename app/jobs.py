@@ -42,7 +42,8 @@ class Jobs(Resource):
                                                                               request.headers.get('escapedusername'),
                                                                               servername)
             app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
-            cert = utils_file_loads.get_unicore_certificate()
+            unicorex = utils_file_loads.get_unicorex()
+            cert = unicorex.get(request.headers.get('system'), {}).get('certificate', False)
             app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
     
             # Get Properties of kernelurl
@@ -346,12 +347,10 @@ class Jobs(Resource):
     
             # Get URL and certificate to communicate with UNICORE/X
             app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))
-            urls = utils_file_loads.get_unicorex_urls()
-            app.log.trace("{} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, urls))
-            url = urls.get(request.json.get('system'))
-    
-            app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
-            cert = utils_file_loads.get_unicore_certificate()
+            unicorex = utils_file_loads.get_unicorex()
+            url = unicorex.get(request.json.get('system'), {}).get('link', '<no_url_found_for_{}>'.format(request.json.get('system')))
+            app.log.trace("{} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, url))
+            cert = unicorex.get(request.json.get('system'), {}).get('certificate', False)
             app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
     
             # Submit Job. It will not be started, because of unicore_json['haveClientStageIn']='true'
