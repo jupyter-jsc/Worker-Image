@@ -24,10 +24,10 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                  servername)
 
     # Get certificate path to communicate with UNICORE/X Server
-    app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
+    app_logger.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
     unicorex = utils_file_loads.get_unicorex()
     cert = unicorex.get(system, {}).get('certificate', False)
-    app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
+    app_logger.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
 
     # Get logs from the UNICORE workspace. Necessary for support
     app_logger.debug("{} - Copy_log".format(uuidcode))
