@@ -93,6 +93,8 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
                       "X-UNICORE-User-Preferences": "uid:{},group:{}".format(request_headers.get('account'), request_headers.get('project')),
                       "Content-Type": "application/json",
                       "Authorization": "Bearer {}".format(accesstoken)}
+    if request_headers.get('project') == "default":
+        unicore_header["X-UNICORE-User-Preferences"] = "uid:{}".format(request_headers.get('account'))
 
     if request_headers.get('X-UNICORE-SecuritySession', None):
         unicore_header['X-UNICORE-SecuritySession'] = request_headers.get('X-UNICORE-SecuritySession')
