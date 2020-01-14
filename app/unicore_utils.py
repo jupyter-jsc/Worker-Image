@@ -13,7 +13,7 @@ import json
 
 
 from app.utils_file_loads import get_nodes, get_jlab_conf, get_inputs,\
-    get_hub_port, get_fastnet_changes, get_base_url
+    get_hub_port, get_fastnet_changes, get_base_url, get_queue_support
 from app.tunnel_communication import get_remote_node
 from app.unity_communication import renew_token
 from app import unicore_communication
@@ -108,7 +108,8 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
            'Imports': []}
-    #       'Project': project}
+
+    queue_support = get_queue_support()
 
     for inp in unicore_input:
         job['Imports'].append(
@@ -124,7 +125,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
         job['Executable'] = 'bash .start.sh'
         app_logger.trace("{} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
-    if request_json.get('system').upper() != 'JURON' and request_json.get('system').upper() != 'SUPERMUC':
+    if request_json.get('system').upper() in queue_support.get('supported', []):
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
         job['Resources'] = {}

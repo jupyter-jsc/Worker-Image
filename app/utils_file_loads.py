@@ -66,3 +66,8 @@ def get_unity():
     with open('/etc/j4j/j4j_mount/j4j_common/unity.json', 'r') as f:
         unity = json.load(f)
     return unity
+
+def get_queue_support():
+    with open('/etc/j4j/j4j_mount/j4j_worker/queue_support.json', 'r') as f:
+        queue = json.load(f)
+    return queue
