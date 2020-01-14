@@ -222,7 +222,7 @@ class Jobs(Resource):
                                             request.headers.get('escapedusername'),
                                             servername)
                     except:
-                        app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
+                        app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
                                                                                                                                   app.urls.get('tunnel', {}).get('url_tunnel'),
                                                                                                                                   app.urls.get('hub', {}).get('url_cancel'),
                                                                                                                                   kernelurl,

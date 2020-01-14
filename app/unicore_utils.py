@@ -124,7 +124,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
         job['Executable'] = 'bash .start.sh'
         app_logger.trace("{} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
-    if request_json.get('system').upper() != 'JURON':
+    if request_json.get('system').upper() != 'JURON' and request_json.get('system').upper() != 'SUPERMUC':
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
         job['Resources'] = {}
