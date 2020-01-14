@@ -37,15 +37,10 @@ def get_nodes():
         nodes = json.load(f)
     return nodes
 
-def get_unicore_certificate():
+def get_unicorex():
     with open('/etc/j4j/j4j_mount/j4j_common/unicore.json', 'r') as f:
         data = json.load(f)
-    return data.get('certificate', False)
-
-def get_unicorex_urls():
-    with open('/etc/j4j/j4j_mount/j4j_common/unicore.json', 'r') as f:
-        data = json.load(f)
-    return data.get('links', {})
+    return data
 
 def get_jlab_conf():
     with open('/etc/j4j/j4j_mount/j4j_worker/jupyterlab.conf', 'r') as f:
@@ -71,3 +66,8 @@ def get_unity():
     with open('/etc/j4j/j4j_mount/j4j_common/unity.json', 'r') as f:
         unity = json.load(f)
     return unity
+
+def get_queue_support():
+    with open('/etc/j4j/j4j_mount/j4j_worker/queue_support.json', 'r') as f:
+        queue = json.load(f)
+    return queue

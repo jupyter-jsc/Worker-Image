@@ -1,6 +1,6 @@
 from app import unicore_utils, utils_file_loads, tunnel_communication, hub_communication, orchestrator_communication
 
-def stop_job(app_logger, uuidcode, servername, request_headers, app_urls, send_cancel=True):
+def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls, send_cancel=True):
     app_logger.trace("{} - Create UNICORE Header".format(uuidcode))
     if ':' not in servername:
         servername = "{}:{}".format(request_headers.get('escapedusername'), servername)
@@ -24,8 +24,10 @@ def stop_job(app_logger, uuidcode, servername, request_headers, app_urls, send_c
                                  servername)
 
     # Get certificate path to communicate with UNICORE/X Server
-    app_logger.trace("{} - FileLoad: Get UNICORE/X Certificate".format(uuidcode))
-    cert = utils_file_loads.get_unicore_certificate()
+    app_logger.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
+    unicorex = utils_file_loads.get_unicorex()
+    cert = unicorex.get(system, {}).get('certificate', False)
+    app_logger.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
 
     # Get logs from the UNICORE workspace. Necessary for support
     app_logger.debug("{} - Copy_log".format(uuidcode))

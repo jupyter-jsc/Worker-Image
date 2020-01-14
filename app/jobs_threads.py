@@ -76,6 +76,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 stop_job(app_logger,
                          uuidcode,
                          servername,
+                         request_headers.get('system'),
                          request_headers,
                          app_urls)
                 return "", 539
@@ -92,6 +93,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
             stop_job(app_logger,
                      uuidcode,
                      servername,
+                     request_headers.get('system'),
                      request_headers,
                      app_urls)
             return "", 530
@@ -127,6 +129,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 stop_job(app_logger,
                          uuidcode,
                          servername,
+                         request_headers.get('system'),
                          request_headers,
                          app_urls)
             app_logger.info("{} - Get filelist ({}) failed {} time(s)".format(uuidcode, request_headers.get('filedir'), counter))
@@ -171,6 +174,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 stop_job(app_logger,
                          uuidcode,
                          servername,
+                         request_headers.get('system'),
                          request_headers,
                          app_urls)
                 return
