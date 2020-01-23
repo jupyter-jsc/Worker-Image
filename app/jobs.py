@@ -204,66 +204,76 @@ class Jobs(Resource):
                     # It's running and tunnel is up
                     status = 'running'
                 elif '.host' in children or '/.host' in children:
-                    # running, build up tunnel
-                    try:
-                        tunnel_utils.create(app.log,
-                                            uuidcode,
-                                            app.urls.get('hub', {}).get('url_proxy_route'),
-                                            app.urls.get('tunnel', {}).get('url_tunnel'),
-                                            app.urls.get('hub', {}).get('url_cancel'),
-                                            kernelurl,
-                                            request.headers.get('filedir'),
-                                            unicore_header,
-                                            request.headers.get('servername'),
-                                            request.headers.get('system'),
-                                            request.headers.get('port'),
-                                            cert,
-                                            request.headers.get('jhubtoken'),
-                                            request.headers.get('escapedusername'),
-                                            servername)
-                    except:
-                        app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
-                                                                                                                                  app.urls.get('tunnel', {}).get('url_tunnel'),
-                                                                                                                                  app.urls.get('hub', {}).get('url_cancel'),
-                                                                                                                                  kernelurl,
-                                                                                                                                  request.headers.get('filedir'),
-                                                                                                                                  remove_secret(unicore_header),
-                                                                                                                                  request.headers.get('servername'),
-                                                                                                                                  request.headers.get('system'),
-                                                                                                                                  request.headers.get('port'),
-                                                                                                                                  cert,
-                                                                                                                                  '<secret>'))
-                        app.log.trace("{} - Call stop_job".format(uuidcode))
-                        orchestrator_communication.set_skip(app.log,
-                                                            uuidcode,
-                                                            app.urls.get('orchestrator', {}).get('url_skip'),
-                                                            request.headers.get('servername'),
-                                                            'False')
-                        stop_job(app.log,
-                                 uuidcode,
-                                 servername,
-                                 request.headers.get('system'),
-                                 request.headers,
-                                 app.urls)
-                        return "", 539
+                    if request.headers.get('pollspawner', 'false').lower() == 'true':
+                        # If there's an error when collecting the children list it may happen, that we would try to create a tunnel for a server that's already running for a long time
+                        app.log.error('{} - Poll Spawner wants to create tunnel. Stop it. Children list: {}'.format(uuidcode, children))
+                        status = 'running'
+                    else:
+                        # build up tunnel
+                        try:
+                            tunnel_utils.create(app.log,
+                                                uuidcode,
+                                                app.urls.get('hub', {}).get('url_proxy_route'),
+                                                app.urls.get('tunnel', {}).get('url_tunnel'),
+                                                app.urls.get('hub', {}).get('url_cancel'),
+                                                kernelurl,
+                                                request.headers.get('filedir'),
+                                                unicore_header,
+                                                request.headers.get('servername'),
+                                                request.headers.get('system'),
+                                                request.headers.get('port'),
+                                                cert,
+                                                request.headers.get('jhubtoken'),
+                                                request.headers.get('escapedusername'),
+                                                servername)
+                        except:
+                            app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
+                                                                                                                                app.urls.get('tunnel', {}).get('url_tunnel'),
+                                                                                                                                app.urls.get('hub', {}).get('url_cancel'),
+                                                                                                                                kernelurl,
+                                                                                                                                request.headers.get('filedir'),
+                                                                                                                                remove_secret(unicore_header),
+                                                                                                                                request.headers.get('servername'),
+                                                                                                                                request.headers.get('system'),
+                                                                                                                                request.headers.get('port'),
+                                                                                                                                cert,
+                                                                                                                                '<secret>'))
+                            app.log.trace("{} - Call stop_job".format(uuidcode))
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                                'False')
+                            stop_job(app.log,
+                                     uuidcode,
+                                     servername,
+                                     request.headers.get('system'),
+                                     request.headers,
+                                     app.urls)
+                            return "", 539
                     status = 'running'
                 else:
-                    request_headers = {}
-                    for key, value in request.headers.items():
-                        if 'Token' in key:
-                            key = key.replace('-', '_')
-                        request_headers[key.lower()] = value
-                    app.log.trace("{} - New Header for Thread: {}".format(uuidcode, request_headers))
-                    # no .host in children, let's start a thread which looks for it every second
-                    t = Thread(target=jobs_threads.get,
-                               args=(app.log,
-                                     uuidcode,
-                                     request_headers,
-                                     unicore_header,
-                                     app.urls,
-                                     cert))
-                    t.start()
-                    status = 'waitforhostname'
+                    if request.headers.get('pollspawner', 'false').lower() == 'true':
+                        # If there's an error when collecting the children list it may happen, that we would create a thread to get better information. We just send running and hope for the next run
+                        app.log.error('{} - Poll Spawner wants to create get_status thread. Prevent it. Children list: {}'.format(uuidcode, children))
+                        status = 'running'
+                    else:
+                        request_headers = {}
+                        for key, value in request.headers.items():
+                            if 'Token' in key:
+                                key = key.replace('-', '_')
+                            request_headers[key.lower()] = value
+                        app.log.trace("{} - New Header for Thread: {}".format(uuidcode, request_headers))
+                        # no .host in children, let's start a thread which looks for it every second
+                        t = Thread(target=jobs_threads.get,
+                                   args=(app.log,
+                                         uuidcode,
+                                         request_headers,
+                                         unicore_header,
+                                         app.urls,
+                                         cert))
+                        t.start()
+                        status = 'waitforhostname'
                 app.log.info("{} - Update JupyterHub status ({})".format(uuidcode, status))
                 hub_communication.status(app.log,
                                          uuidcode,
