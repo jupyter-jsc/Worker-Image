@@ -174,8 +174,13 @@ class Jobs(Resource):
                             app.log.debug("{} - Could not get children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get information about filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                            raise Exception("{} - Could not get information about filedirectory. Throw Exception because of wrong status_code: {}".format(uuidcode, status_code))
+                            app.log.exception("{} - Could not get information about filedirectory. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                               'False')
+                            return "", 539
                 except:
                     app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.trace("{} - Call stop_job".format(uuidcode))
