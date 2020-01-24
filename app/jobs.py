@@ -179,7 +179,7 @@ class Jobs(Resource):
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
                                                                 request.headers.get('servername'),
-                                                               'False')
+                                                                'False')
                             return "", 539
                 except:
                     app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
