@@ -10,6 +10,7 @@ import json
 
 from app import unicore_communication, hub_communication,\
     tunnel_utils, orchestrator_communication
+from app.unity_communication import renew_token
 from app.utils import remove_secret
 from app.jobs_utils import stop_job
 
@@ -22,9 +23,25 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
     counter = 0
     children = []
     status = ''
+    accesstoken = request_headers.get('accesstoken')
+    expire = request_headers.get('expire')
     while True:
         # start with sleep, this function is only called, if .host was not in children
         time.sleep(3)
+        # renew token. This may be run for a long time, so the accesstoken can expire 
+        accesstoken, expire = renew_token(app_logger,
+                                          uuidcode,
+                                          request_headers.get("tokenurl"),
+                                          request_headers.get("authorizeurl"),
+                                          request_headers.get("refreshtoken"),
+                                          accesstoken,
+                                          expire,
+                                          request_headers.get('jhubtoken'),
+                                          app_urls.get('hub', {}).get('url_proxy_route'),
+                                          app_urls.get('hub', {}).get('url_token'),
+                                          request_headers.get('escapedusername'),
+                                          request_headers.get('servername'))
+        unicore_header['Authorization'] = 'Bearer {}'.format(accesstoken)
 
         for i in range(3):  # @UnusedVariable
             properties_json = {}
