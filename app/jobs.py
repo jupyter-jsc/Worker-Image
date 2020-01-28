@@ -23,8 +23,8 @@ class Jobs(Resource):
         try:
             # Track actions through different webservices.
             uuidcode = request.headers.get('uuidcode', '<no uuidcode>')
-            app.log.info("{} - Get Server Status".format(uuidcode))
-            app.log.trace("{} - Headers: {}".format(uuidcode, request.headers.to_list()))
+            app.log.info("uuidcode={} - Get Server Status".format(uuidcode))
+            app.log.trace("uuidcode={} - Headers: {}".format(uuidcode, request.headers.to_list()))
     
             # Check for J4J intern token
             validate_auth(app.log,
@@ -41,10 +41,10 @@ class Jobs(Resource):
                                                                               app.urls.get('hub', {}).get('url_token'),
                                                                               request.headers.get('escapedusername'),
                                                                               servername)
-            app.log.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
+            app.log.trace("uuidcode={} - FileLoad: UNICORE/X certificate path".format(uuidcode))
             unicorex = utils_file_loads.get_unicorex()
             cert = unicorex.get(request.headers.get('system', ''), {}).get('certificate', False)
-            app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
+            app.log.trace("uuidcode={} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
     
             # Get Properties of kernelurl
             kernelurl = request.headers.get('kernelurl')
@@ -55,7 +55,7 @@ class Jobs(Resource):
                     method_args = {"url": kernelurl,
                                    "headers": unicore_header,
                                    "certificate": cert}
-                    app.log.info("{} - Get Properties of UNICORE/X Job {}".format(uuidcode, kernelurl))
+                    app.log.info("uuidcode={} - Get Properties of UNICORE/X Job {}".format(uuidcode, kernelurl))
                     text, status_code, response_header = unicore_communication.request(app.log,
                                                                                        uuidcode,
                                                                                        method,
@@ -64,16 +64,16 @@ class Jobs(Resource):
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                         properties_json = json.loads(text)
                         if properties_json.get('status') == 'UNDEFINED' and i < 4:
-                            app.log.debug("{} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
+                            app.log.debug("uuidcode={} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
                             break
                     elif status_code == 404:
                         if i < 4:
-                            app.log.debug("{} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get properties. 404 Not found. Stop Job and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.warning("uuidcode={} - Could not get properties. 404 Not found. Stop Job and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -88,11 +88,11 @@ class Jobs(Resource):
                             return "", 539
                     elif status_code == 500:
                         if i < 4:
-                            app.log.debug("{} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
-                            app.log.warning("{} - Do not send update to JupyterHub.".format(uuidcode))
+                            app.log.warning("uuidcode={} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.warning("uuidcode={} - Do not send update to JupyterHub.".format(uuidcode))
                             # If JupyterHub don't receives an update for a long time it can stop the job itself.
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
@@ -102,14 +102,14 @@ class Jobs(Resource):
                             return "", 539
                     else:
                         if i < 4:
-                            app.log.debug("{} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.warning("uuidcode={} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             raise Exception("{} - Could not get properties. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
                 except:
-                    app.log.exception("{} - Could not get properties. JupyterLab will be still running. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                    app.log.warning("{} - Do not send update to JupyterHub.".format(uuidcode))
+                    app.log.exception("uuidcode={} - Could not get properties. JupyterLab will be still running. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                    app.log.warning("uuidcode={} - Do not send update to JupyterHub.".format(uuidcode))
                     # If JupyterHub don't receives an update for a long time it can stop the job itself.
                     orchestrator_communication.set_skip(app.log,
                                                         uuidcode,
@@ -120,8 +120,8 @@ class Jobs(Resource):
     
             if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
                 # Job is Finished for UNICORE, so it should be for JupyterHub
-                app.log.warning('{} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
+                app.log.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
                                                     app.urls.get('orchestrator', {}).get('url_skip'),
@@ -144,7 +144,7 @@ class Jobs(Resource):
                     method_args = {"url": request.headers.get('filedir'),
                                    "headers": unicore_header,
                                    "certificate": cert}
-                    app.log.info("{} - Get list of files of UNICORE/X Job {}".format(uuidcode, kernelurl))
+                    app.log.info("uuidcode={} - Get list of files of UNICORE/X Job {}".format(uuidcode, kernelurl))
                     text, status_code, response_header = unicore_communication.request(app.log,
                                                                                        uuidcode,
                                                                                        method,
@@ -153,16 +153,16 @@ class Jobs(Resource):
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                         children = json.loads(text).get('children', [])
                         if len(children) == 0 and i < 4:
-                            app.log.debug("{} - Received empty children list. Try again in 2 seconds".format(uuidcode))
+                            app.log.debug("uuidcode={} - Received empty children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
                             break
                     elif status_code == 404:
                         if i < 4:
-                            app.log.debug("{} - Could not get children list. 404 Not found. Try again in 2 seconds.".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get children list. 404 Not found. Try again in 2 seconds.".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.error("{} - Could not get children list. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.error("uuidcode={} - Could not get children list. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -171,10 +171,10 @@ class Jobs(Resource):
                             return "", 539
                     else:
                         if i < 4:
-                            app.log.debug("{} - Could not get children list. Try again in 2 seconds".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.exception("{} - Could not get information about filedirectory. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.exception("uuidcode={} - Could not get information about filedirectory. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -182,8 +182,8 @@ class Jobs(Resource):
                                                                 'False')
                             return "", 539
                 except:
-                    app.log.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                    app.log.trace("{} - Call stop_job".format(uuidcode))
+                    app.log.exception("uuidcode={} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                    app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                     orchestrator_communication.set_skip(app.log,
                                                         uuidcode,
                                                         app.urls.get('orchestrator', {}).get('url_skip'),
@@ -211,7 +211,7 @@ class Jobs(Resource):
                 elif '.host' in children or '/.host' in children:
                     if request.headers.get('pollspawner', 'false').lower() == 'true':
                         # If there's an error when collecting the children list it may happen, that we would try to create a tunnel for a server that's already running for a long time
-                        app.log.error('{} - Poll Spawner wants to create tunnel. Stop it. Children list: {}'.format(uuidcode, children))
+                        app.log.error('uuidcode={} - Poll Spawner wants to create tunnel. Stop it. Children list: {}'.format(uuidcode, children))
                         status = 'running'
                     else:
                         # build up tunnel
@@ -232,7 +232,7 @@ class Jobs(Resource):
                                                 request.headers.get('escapedusername'),
                                                 servername)
                         except:
-                            app.log.error("{} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
+                            app.log.error("uuidcode={} - Could not create Tunnel. Used Parameters: {} {} {} {} {} {} {} {} {} {}".format(uuidcode,
                                                                                                                                 app.urls.get('tunnel', {}).get('url_tunnel'),
                                                                                                                                 app.urls.get('hub', {}).get('url_cancel'),
                                                                                                                                 kernelurl,
@@ -243,7 +243,7 @@ class Jobs(Resource):
                                                                                                                                 request.headers.get('port'),
                                                                                                                                 cert,
                                                                                                                                 '<secret>'))
-                            app.log.trace("{} - Call stop_job".format(uuidcode))
+                            app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -260,7 +260,7 @@ class Jobs(Resource):
                 else:
                     if request.headers.get('pollspawner', 'false').lower() == 'true':
                         # If there's an error when collecting the children list it may happen, that we would create a thread to get better information. We just send running and hope for the next run
-                        app.log.error('{} - Poll Spawner wants to create get_status thread. Prevent it. Children list: {}'.format(uuidcode, children))
+                        app.log.error('uuidcode={} - Poll Spawner wants to create get_status thread. Prevent it. Children list: {}'.format(uuidcode, children))
                         status = 'running'
                     else:
                         request_headers = {}
@@ -268,7 +268,7 @@ class Jobs(Resource):
                             if 'Token' in key:
                                 key = key.replace('-', '_')
                             request_headers[key.lower()] = value
-                        app.log.trace("{} - New Header for Thread: {}".format(uuidcode, request_headers))
+                        app.log.trace("uuidcode={} - New Header for Thread: {}".format(uuidcode, request_headers))
                         # no .host in children, let's start a thread which looks for it every second
                         t = Thread(target=jobs_threads.get,
                                    args=(app.log,
@@ -279,7 +279,7 @@ class Jobs(Resource):
                                          cert))
                         t.start()
                         status = 'waitforhostname'
-                app.log.info("{} - Update JupyterHub status ({})".format(uuidcode, status))
+                app.log.info("uuidcode={} - Update JupyterHub status ({})".format(uuidcode, status))
                 hub_communication.status(app.log,
                                          uuidcode,
                                          app.urls.get('hub', {}).get('url_proxy_route'),
@@ -289,7 +289,7 @@ class Jobs(Resource):
                                          request.headers.get('escapedusername'),
                                          servername)
                 if status in ['running', 'stopped'] and request.headers.get('spawning', 'true').lower() == 'true': # spawning is finished
-                    app.log.trace('{} - Tell J4J_Orchestrator that the spawning is done'.format(uuidcode))
+                    app.log.trace('uuidcode={} - Tell J4J_Orchestrator that the spawning is done'.format(uuidcode))
                     try:
                         orchestrator_communication.set_spawning(app.log,
                                                                 uuidcode,
@@ -297,11 +297,11 @@ class Jobs(Resource):
                                                                 request.headers.get('servername'),
                                                                 'False')
                     except:
-                        app.log.exception("{} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
+                        app.log.exception("uuidcode={} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
     
             else:
-                app.log.warning('{} - Unknown JobStatus: {}'.format(uuidcode, properties_json.get('status')))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
+                app.log.warning('uuidcode={} - Unknown JobStatus: {}'.format(uuidcode, properties_json.get('status')))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app.log,
                          uuidcode,
                          servername,
@@ -322,9 +322,9 @@ class Jobs(Resource):
         try:
             # Track actions through different webservices.
             uuidcode = request.headers.get('uuidcode', '<no uuidcode>')
-            app.log.info("{} - Spawn Server".format(uuidcode))
-            app.log.trace("{} - Headers: {}".format(uuidcode, request.headers.to_list()))
-            app.log.trace("{} - Json: {}".format(uuidcode, request.json))
+            app.log.info("uuidcode={} - Spawn Server".format(uuidcode))
+            app.log.trace("uuidcode={} - Headers: {}".format(uuidcode, request.headers.to_list()))
+            app.log.trace("uuidcode={} - Json: {}".format(uuidcode, request.json))
     
             # Check for J4J intern token
             validate_auth(app.log,
@@ -349,8 +349,8 @@ class Jobs(Resource):
                                                             request.json,
                                                             app.urls.get('tunnel', {}).get('url_remote'))
             except:
-                app.log.exception("{} - Could not create input files for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
+                app.log.exception("uuidcode={} - Could not create input files for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app.log,
                          uuidcode,
                          servername,
@@ -367,12 +367,12 @@ class Jobs(Resource):
                                                     unicore_input)
     
             # Get URL and certificate to communicate with UNICORE/X
-            app.log.trace("{} - FileLoad: UNICORE/X url".format(uuidcode))
+            app.log.trace("uuidcode={} - FileLoad: UNICORE/X url".format(uuidcode))
             unicorex = utils_file_loads.get_unicorex()
             url = unicorex.get(request.json.get('system', ''), {}).get('link', '<no_url_found_for_{}>'.format(request.json.get('system')))
-            app.log.trace("{} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, url))
+            app.log.trace("uuidcode={} - FileLoad: UNICORE/X url Result: {}".format(uuidcode, url))
             cert = unicorex.get(request.json.get('system', ''), {}).get('certificate', False)
-            app.log.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
+            app.log.trace("uuidcode={} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
     
             # Submit Job. It will not be started, because of unicore_json['haveClientStageIn']='true'
             kernelurl = ""
@@ -390,20 +390,20 @@ class Jobs(Resource):
                                "headers": unicore_header,
                                "data": json.dumps(unicore_json),
                                "certificate": cert}
-                app.log.info("{} - Submit UNICORE/X Job to {}".format(uuidcode, url+"/jobs"))
+                app.log.info("uuidcode={} - Submit UNICORE/X Job to {}".format(uuidcode, url+"/jobs"))
                 text, status_code, response_header = unicore_communication.request(app.log,
                                                                                    uuidcode,
                                                                                    method,
                                                                                    method_args)
                 if status_code != 201:
-                    app.log.warning("{} - Could not submit Job. Response from UNICORE/X: {} {} {}.".format(uuidcode, text, status_code, remove_secret(response_header)))
+                    app.log.warning("uuidcode={} - Could not submit Job. Response from UNICORE/X: {} {} {}.".format(uuidcode, text, status_code, remove_secret(response_header)))
                     raise Exception("{} - Could not submit Job. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
                 else:
                     unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                     kernelurl = response_header['Location']
             except:
-                app.log.exception("{} - Could not submit Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
+                app.log.exception("uuidcode={} - Could not submit Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app.log,
                          uuidcode,
                          servername,
@@ -420,29 +420,29 @@ class Jobs(Resource):
                     method_args = {"url": kernelurl,
                                    "headers": unicore_header,
                                    "certificate": cert}
-                    app.log.info("{} - Get Properties of UNICORE/X Job {}".format(uuidcode, kernelurl))
+                    app.log.info("uuidcode={} - Get Properties of UNICORE/X Job {}".format(uuidcode, kernelurl))
                     text, status_code, response_header = unicore_communication.request(app.log,
                                                                                        uuidcode,
                                                                                        method,
                                                                                        method_args)
                     if status_code != 200:
                         if i < 4:
-                            app.log.debug("{} - Could not get properties of Job. Try again in 2 seconds".format(uuidcode))
+                            app.log.debug("uuidcode={} - Could not get properties of Job. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.warning("{} - Could not get properties of Job. Response from UNICORE/X: {} {} {}.".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.warning("uuidcode={} - Could not get properties of Job. Response from UNICORE/X: {} {} {}.".format(uuidcode, text, status_code, remove_secret(response_header)))
                             raise Exception("{} - Could not get properties of Job. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
                     else:
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                         properties_json = json.loads(text)
                         if properties_json.get('status') == 'UNDEFINED' and i < 4:
-                            app.log.debug("{} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
+                            app.log.debug("uuidcode={} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
                             break
                 except:
-                    app.log.exception("{} - Could not get properties of Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                    app.log.trace("{} - Call stop_job".format(uuidcode))
+                    app.log.exception("uuidcode={} - Could not get properties of Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                    app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                     stop_job(app.log,
                              uuidcode,
                              servername,
@@ -460,20 +460,20 @@ class Jobs(Resource):
                 method_args = {"url": properties_json['_links']['workingDirectory']['href'],
                                "headers": unicore_header,
                                "certificate": cert}
-                app.log.info("{} - Get path of file directory of UNICORE/X Job".format(uuidcode))
+                app.log.info("uuidcode={} - Get path of file directory of UNICORE/X Job".format(uuidcode))
                 text, status_code, response_header = unicore_communication.request(app.log,
                                                                                    uuidcode,
                                                                                    method,
                                                                                    method_args)
                 if status_code != 200:
-                    app.log.warning("{} - Could not get filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                    app.log.warning("uuidcode={} - Could not get filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                     raise Exception("{} - Could not get filedirectory. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
                 else:
                     unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                     filedirectory = json.loads(text)['_links']['files']['href']
             except:
-                app.log.exception("{} - Could not get filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                app.log.trace("{} - Call stop_job".format(uuidcode))
+                app.log.exception("uuidcode={} - Could not get filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app.log,
                          uuidcode,
                          servername,
@@ -492,8 +492,8 @@ class Jobs(Resource):
         try:
             # Track actions through different webservices.
             uuidcode = request.headers.get('uuidcode', '<no uuidcode>')
-            app.log.info("{} - Delete Server".format(uuidcode))
-            app.log.trace("{} - Headers: {}".format(uuidcode, request.headers.to_list()))
+            app.log.info("uuidcode={} - Delete Server".format(uuidcode))
+            app.log.trace("uuidcode={} - Headers: {}".format(uuidcode, request.headers.to_list()))
     
             # Check for the J4J intern token
             validate_auth(app.log,
@@ -507,7 +507,7 @@ class Jobs(Resource):
                                                              request.headers,
                                                              app.urls,
                                                              False)
-            app.log.trace("{} - Return: {};{};{}".format(uuidcode, accesstoken, expire, security_session))
+            app.log.trace("uuidcode={} - Return: {};{};{}".format(uuidcode, accesstoken, expire, security_session))
     
             return "", 200, {'accesstoken': accesstoken,
                              'expire': str(expire),

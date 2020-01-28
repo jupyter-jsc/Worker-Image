@@ -10,7 +10,7 @@ from app import unicore_communication, hub_communication, unicore_utils,\
 from app.utils import remove_secret
 
 def create(app_logger, uuidcode, app_hub_url_proxy_route, app_tunnel_url, app_hub_url_cancel, kernelurl, filedir, unicore_header, servername, system, port, cert, jhubtoken, username, servername_short):
-    app_logger.trace("{} - Try to create a tunnel".format(uuidcode))
+    app_logger.trace("uuidcode={} - Try to create a tunnel".format(uuidcode))
     accept = unicore_header.get('Accept', False)
     unicore_header['Accept'] = 'application/octet-stream'
     hostname = ""
@@ -25,14 +25,14 @@ def create(app_logger, uuidcode, app_hub_url_proxy_route, app_tunnel_url, app_hu
                                                                               method,
                                                                               method_args)
         if status_code != 200:
-            app_logger.warning("{} - Could not get hostname. UNICORE/X Response: {} {} {}".format(uuidcode, content, status_code, remove_secret(response_header)))
+            app_logger.warning("uuidcode={} - Could not get hostname. UNICORE/X Response: {} {} {}".format(uuidcode, content, status_code, remove_secret(response_header)))
             raise Exception("{} - Could not get hostname. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
         else:
             unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
             hostname = content.strip()
     except:
-        app_logger.exception("{} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
-        app_logger.warning("{} - Send cancel to JupyterHub.".format(uuidcode))
+        app_logger.exception("uuidcode={} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+        app_logger.warning("uuidcode={} - Send cancel to JupyterHub.".format(uuidcode))
         hub_communication.cancel(app_logger,
                                  uuidcode,
                                  app_hub_url_proxy_route,
@@ -84,13 +84,13 @@ def create(app_logger, uuidcode, app_hub_url_proxy_route, app_tunnel_url, app_hu
                                                                            method,
                                                                            method_args)
         if status_code != 204:
-            app_logger.warning("{} - Could not create .tunnel file. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+            app_logger.warning("uuidcode={} - Could not create .tunnel file. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
             raise Exception("{} - Could not create .tunnel file. Throw Exception because of wrong status_code: {}".format(uuidcode, status_code))
         else:
             unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
     except:
-        app_logger.exception("{} - Could not create .tunnel file. {} {}".format(uuidcode, method, remove_secret(method_args)))
-        app_logger.warning("{} - Send cancel to JupyterHub.".format(uuidcode))
+        app_logger.exception("uuidcode={} - Could not create .tunnel file. {} {}".format(uuidcode, method, remove_secret(method_args)))
+        app_logger.warning("uuidcode={} - Send cancel to JupyterHub.".format(uuidcode))
         hub_communication.cancel(app_logger,
                                  uuidcode,
                                  app_hub_url_proxy_route,

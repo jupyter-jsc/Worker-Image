@@ -14,9 +14,9 @@ def validate_auth(app_logger, uuidcode, intern_authorization):
     if not intern_authorization == None:
         token = get_j4j_worker_token()
         if intern_authorization == token:
-            app_logger.debug("{} - Intern-Authorization validated".format(uuidcode))
+            app_logger.debug("uuidcode={} - Intern-Authorization validated".format(uuidcode))
             return
-    app_logger.warning("{} - Could not validate Token:\n{}".format(uuidcode, intern_authorization))
+    app_logger.warning("uuidcode={} - Could not validate Token:\n{}".format(uuidcode, intern_authorization))
     abort(401)
 
 def remove_secret(json_dict):

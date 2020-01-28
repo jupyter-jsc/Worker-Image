@@ -18,10 +18,10 @@ from app.utils import remove_secret
 def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, accesstoken, expire, jhubtoken, app_hub_url_proxy_route, app_hub_url_token, username, servername=''):
     if int(expire) - int(time.time()) > 60:
         return accesstoken, expire
-    app_logger.info("{} - Renew Token: Expire at {} , time: {}".format(uuidcode, int(expire), int(time.time())))
+    app_logger.info("uuidcode={} - Renew Token: Expire at {} , time: {}".format(uuidcode, int(expire), int(time.time())))
     unity = get_unity()
     if token_url == '':
-        app_logger.warning("{} - Use default token_url. Please send token_url in header".format(uuidcode))
+        app_logger.warning("uuidcode={} - Use default token_url. Please send token_url in header".format(uuidcode))
         token_url = unity.get('links').get('token')
     tokeninfo_url = unity[token_url].get('links', {}).get('tokeninfo')
     cert_path = unity[token_url].get('certificate', False)
@@ -32,27 +32,27 @@ def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, ac
             'scope': scope}
     headers = { 'Authorization': 'Basic {}'.format(b64key),
                 'Accept': 'application/json' }
-    app_logger.info("{} - Post to {}".format(uuidcode, token_url))
-    app_logger.trace("{} - Header: {}".format(uuidcode, headers))
-    app_logger.trace("{} - Data: {}".format(uuidcode, data))
+    app_logger.info("uuidcode={} - Post to {}".format(uuidcode, token_url))
+    app_logger.trace("uuidcode={} - Header: {}".format(uuidcode, headers))
+    app_logger.trace("uuidcode={} - Data: {}".format(uuidcode, data))
     try:
         with closing(requests.post(token_url,
                                    headers = headers,
                                    data = data,
                                    verify = cert_path,
                                    timeout = 1800)) as r:
-            app_logger.trace("{} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
+            app_logger.trace("uuidcode={} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
             accesstoken = r.json().get('access_token')
         with closing(requests.get(tokeninfo_url,
                                   headers = { 'Authorization': 'Bearer {}'.format(accesstoken) },
                                   verify = cert_path,
                                   timeout = 1800)) as r:
-            app_logger.trace("{} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
+            app_logger.trace("uuidcode={} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
             expire = r.json().get('exp')
     except:
-        app_logger.exception("{} - Could not update token".format(uuidcode))
+        app_logger.exception("uuidcode={} - Could not update token".format(uuidcode))
         raise Exception("{} - Could not update token".format(uuidcode))
-    app_logger.info("{} - Update JupyterHub Token".format(uuidcode))
+    app_logger.info("uuidcode={} - Update JupyterHub Token".format(uuidcode))
     hub_communication.token(app_logger,
                             uuidcode,
                             app_hub_url_proxy_route,
