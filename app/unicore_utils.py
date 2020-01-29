@@ -112,6 +112,8 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
            'Environment': env_list,
            'Imports': []}
     queue_support = get_queue_support()
+    if request_json.get('system') == "JUROPA":
+        job['Project'] = 'root'
     for inp in unicore_input:
         job['Imports'].append(
             {
