@@ -105,8 +105,11 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
 # Create Job Dict
 def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("uuidcode={} - Create UNICORE/X Job.".format(uuidcode))
-    job = {'ApplicationName': 'Jupyter4JSC',
-           'Environment': request_json.get('Environment', {}),
+    env_list = []
+    for key, value in request_json.get('Environment', {}).items():
+      env_list.append('{}={}'.format(key, value))
+    job = {'ApplicationName': 'Bash shell',
+           'Environment': env_list,
            'Imports': []}
 
     queue_support = get_queue_support()
@@ -119,12 +122,13 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
                 "Data": inp.get('Data'),
             }
         )
-
     if request_json.get('partition') == 'LoginNode':
-        job['Environment']['UC_PREFER_INTERACTIVE_EXECUTION'] = 'true'
-        job['Executable'] = 'bash .start.sh'
+        job['Executable'] = '/bin/bash'
+        job['Arguments'] = ['.start.sh']
+        job['Job Type'] = 'interactive'
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
+    job['Job Type'] = 'normal'
     if request_json.get('system').upper() in queue_support.get('supported', []):
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
