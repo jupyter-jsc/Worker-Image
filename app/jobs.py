@@ -360,11 +360,18 @@ class Jobs(Resource):
                 return "", 534
     
             # Create Job description
-            unicore_json = unicore_utils.create_job(app.log,
-                                                    uuidcode,
-                                                    request.json,
-                                                    request.headers.get('Project'),
-                                                    unicore_input)
+            if request.json.get('system') in utils_file_loads.get_unicore8_systems():
+                unicore_json = unicore_utils.create_unicore8_job(app.log,
+                                                                 uuidcode,
+                                                                 request.json,
+                                                                 request.headers.get('Project'),
+                                                                 unicore_input)
+            else:
+                unicore_json = unicore_utils.create_job(app.log,
+                                                        uuidcode,
+                                                        request.json,
+                                                        request.headers.get('Project'),
+                                                        unicore_input)
     
             # Get URL and certificate to communicate with UNICORE/X
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X url".format(uuidcode))

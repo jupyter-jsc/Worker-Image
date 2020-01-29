@@ -102,18 +102,16 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     app_logger.trace("uuidcode={} - UNICORE/X Header: {}".format(uuidcode, unicore_header))
     return unicore_header, accesstoken, expire
 
-# Create Job Dict
-def create_job(app_logger, uuidcode, request_json, project, unicore_input):
-    app_logger.debug("uuidcode={} - Create UNICORE/X Job.".format(uuidcode))
+#
+def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_input):
+    app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
     env_list = []
     for key, value in request_json.get('Environment', {}).items():
       env_list.append('{}={}'.format(key, value))
     job = {'ApplicationName': 'Bash shell',
            'Environment': env_list,
            'Imports': []}
-
     queue_support = get_queue_support()
-
     for inp in unicore_input:
         job['Imports'].append(
             {
@@ -128,7 +126,30 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
         job['Job Type'] = 'interactive'
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
-    job['Job Type'] = 'normal'
+
+# Create Job Dict
+def create_job(app_logger, uuidcode, request_json, project, unicore_input):
+    app_logger.debug("uuidcode={} - Create UNICORE/X-7 Job.".format(uuidcode))
+    job = {'ApplicationName': 'Jupyter4JSC',
+           'Environment': request_json.get('Environment', {}),
+           'Imports': []}
+
+    queue_support = get_queue_support()
+
+    for inp in unicore_input:
+        job['Imports'].append(
+            {
+                "From": "inline://dummy",
+                "To"  : inp.get('To'),
+                "Data": inp.get('Data'),
+            }
+        )
+
+    if request_json.get('partition') == 'LoginNode':
+        job['Environment']['UC_PREFER_INTERACTIVE_EXECUTION'] = 'true'
+        job['Executable'] = 'bash .start.sh'
+        app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
+        return job
     if request_json.get('system').upper() in queue_support.get('supported', []):
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
