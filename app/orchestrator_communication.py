@@ -12,7 +12,7 @@ from contextlib import closing
 from app.utils_file_loads import get_j4j_orchestrator_token
 
 def set_spawning(app_logger, uuidcode, orchestrator_url, servername, value):
-    app_logger.debug("{} - Call Orchestrator to finish spawning for servername {} (value: {})".format(uuidcode, servername, value))
+    app_logger.debug("uuidcode={} - Call Orchestrator to finish spawning for servername {} (value: {})".format(uuidcode, servername, value))
     header = { 'Intern-Authorization': get_j4j_orchestrator_token(),
                'uuidcode': uuidcode }
     data_json = { 'servername': servername,
@@ -26,7 +26,7 @@ def set_spawning(app_logger, uuidcode, orchestrator_url, servername, value):
         raise Exception("{} - Received wrong status code from J4J_Orchestrator: {} {} {}".format(uuidcode, r.status_code, r.text, r.headers))
 
 def set_skip(app_logger, uuidcode, orchestrator_url, servername, value):
-    app_logger.debug("{} - Call Orchestrator to set skip for servername {} (value: {})".format(uuidcode, servername, value))
+    app_logger.debug("uuidcode={} - Call Orchestrator to set skip for servername {} (value: {})".format(uuidcode, servername, value))
     header = { 'Intern-Authorization': get_j4j_orchestrator_token(),
                'uuidcode': uuidcode }
     data_json = { 'servername': servername,
@@ -41,7 +41,7 @@ def set_skip(app_logger, uuidcode, orchestrator_url, servername, value):
 
 
 def delete_database_entry(app_logger, uuidcode, orchestrator_url, servername):
-    app_logger.debug("{} - Call Orchestrator to delete database entry for servername {}".format(uuidcode, servername))
+    app_logger.debug("uuidcode={} - Call Orchestrator to delete database entry for servername {}".format(uuidcode, servername))
     header = { 'Intern-Authorization': get_j4j_orchestrator_token(),
                'uuidcode': uuidcode,
                'servername': servername }

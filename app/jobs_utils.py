@@ -1,7 +1,7 @@
 from app import unicore_utils, utils_file_loads, tunnel_communication, hub_communication, orchestrator_communication
 
 def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls, send_cancel=True):
-    app_logger.trace("{} - Create UNICORE Header".format(uuidcode))
+    app_logger.trace("uuidcode={} - Create UNICORE Header".format(uuidcode))
     if ':' not in servername:
         servername = "{}:{}".format(request_headers.get('escapedusername'), servername)
     
@@ -13,7 +13,7 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                                                       request_headers.get('escapedusername'),
                                                                       servername)
     if send_cancel:
-        app_logger.debug("{} - Send cancel to JupyterHub".format(uuidcode))
+        app_logger.debug("uuidcode={} - Send cancel to JupyterHub".format(uuidcode))
         hub_communication.cancel(app_logger,
                                  uuidcode,
                                  app_urls.get('hub', {}).get('url_proxy_route'),
@@ -24,13 +24,13 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                  servername)
 
     # Get certificate path to communicate with UNICORE/X Server
-    app_logger.trace("{} - FileLoad: UNICORE/X certificate path".format(uuidcode))
+    app_logger.trace("uuidcode={} - FileLoad: UNICORE/X certificate path".format(uuidcode))
     unicorex = utils_file_loads.get_unicorex()
     cert = unicorex.get(system, {}).get('certificate', False)
-    app_logger.trace("{} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
+    app_logger.trace("uuidcode={} - FileLoad: UNICORE/X certificate path Result: {}".format(uuidcode, cert))
 
     # Get logs from the UNICORE workspace. Necessary for support
-    app_logger.debug("{} - Copy_log".format(uuidcode))
+    app_logger.debug("uuidcode={} - Copy_log".format(uuidcode))
     try:
         unicore_utils.copy_log(app_logger,
                                uuidcode,
@@ -39,10 +39,10 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                request_headers.get('kernelurl'),
                                cert)
     except:
-        app_logger.exception("{} - Could not copy log.".format(uuidcode))
+        app_logger.exception("uuidcode={} - Could not copy log.".format(uuidcode))
 
     # Abort the Job via UNICORE
-    app_logger.debug("{} - Abort Job".format(uuidcode))
+    app_logger.debug("uuidcode={} - Abort Job".format(uuidcode))
     unicore_utils.abort_job(app_logger,
                             uuidcode,
                             request_headers.get('kernelurl'),
@@ -50,7 +50,7 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                             cert)
 
     # Destroy the Job via UNICORE
-    app_logger.debug("{} - Destroy Job".format(uuidcode))
+    app_logger.debug("uuidcode={} - Destroy Job".format(uuidcode))
     unicore_utils.destroy_job(app_logger,
                               uuidcode,
                               request_headers.get('kernelurl'),
@@ -60,16 +60,16 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
     # Kill the tunnel
     tunnel_info = { "servername": servername }
     try:
-        app_logger.debug("{} - Close ssh tunnel".format(uuidcode))
+        app_logger.debug("uuidcode={} - Close ssh tunnel".format(uuidcode))
         tunnel_communication.close(app_logger,
                                    uuidcode,
                                    app_urls.get('tunnel', {}).get('url_tunnel'),
                                    tunnel_info)
     except:
-        app_logger.exception("{} - Could not stop tunnel. tunnel_info: {} {}".format(uuidcode, tunnel_info, app_urls.get('tunnel', {}).get('url_tunnel')))
+        app_logger.exception("uuidcode={} - Could not stop tunnel. tunnel_info: {} {}".format(uuidcode, tunnel_info, app_urls.get('tunnel', {}).get('url_tunnel')))
 
     # Remove Database entry for J4J_Orchestrator
-    app_logger.debug("{} - Call J4J_Orchestrator to remove entry {} from database".format(uuidcode, servername))
+    app_logger.debug("uuidcode={} - Call J4J_Orchestrator to remove entry {} from database".format(uuidcode, servername))
     orchestrator_communication.delete_database_entry(app_logger,
                                                      uuidcode,
                                                      app_urls.get('orchestrator', {}).get('url_database'),

@@ -50,7 +50,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 method_args = {"url": request_headers.get('kernelurl'),
                                "headers": unicore_header,
                                "certificate": cert}
-                app_logger.info("{} - Get Properties of UNICORE/X Job {}".format(uuidcode, request_headers.get('kernelurl')))
+                app_logger.info("uuidcode={} - Get Properties of UNICORE/X Job {}".format(uuidcode, request_headers.get('kernelurl')))
                 text, status_code, response_header = unicore_communication.request(app_logger,
                                                                                    uuidcode,
                                                                                    method,
@@ -59,13 +59,13 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                     unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                     properties_json = json.loads(text)
                     if properties_json.get('status') == 'UNDEFINED' and i < 4:
-                        app_logger.debug("{} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
+                        app_logger.debug("uuidcode={} - Received status UNDEFINED. Try again in 2 seconds".format(uuidcode))
                         time.sleep(2)
                     else:
                         break
                 elif status_code == 404:
                     if i < 4:
-                        app_logger.debug("{} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
+                        app_logger.debug("uuidcode={} - Could not get properties. 404 Not found. Sleep for 2 seconds and try again".format(uuidcode))
                         time.sleep(2)
                     else:
                         orchestrator_communication.set_skip(app_logger,
@@ -73,14 +73,14 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                             app_urls.get('orchestrator', {}).get('url_skip'),
                                                             request_headers.get('servername'),
                                                             'False')
-                        app_logger.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        app_logger.warning("uuidcode={} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                         return "", 539
                 else:
                     if i < 4:
-                        app_logger.debug("{} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
+                        app_logger.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                         time.sleep(2)
                     else:
-                        app_logger.warning("{} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        app_logger.warning("uuidcode={} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                         raise Exception("{} - Could not get properties. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
             except:
                 orchestrator_communication.set_skip(app_logger,
@@ -88,8 +88,8 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     app_urls.get('orchestrator', {}).get('url_skip'),
                                                     request_headers.get('servername'),
                                                     'False')
-                app_logger.exception("{} - Could not get properties. Try to stop it {} {}".format(uuidcode, method, remove_secret(method_args)))
-                app_logger.trace("{} - Call stop_job".format(uuidcode))
+                app_logger.exception("uuidcode={} - Could not get properties. Try to stop it {} {}".format(uuidcode, method, remove_secret(method_args)))
+                app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app_logger,
                          uuidcode,
                          servername,
@@ -105,8 +105,8 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                 app_urls.get('orchestrator', {}).get('url_skip'),
                                                 request_headers.get('servername'),
                                                 'False')
-            app_logger.warning('{} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
-            app_logger.trace("{} - Call stop_job".format(uuidcode))
+            app_logger.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
+            app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
             stop_job(app_logger,
                      uuidcode,
                      servername,
@@ -133,23 +133,23 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     app_urls.get('orchestrator', {}).get('url_skip'),
                                                     request_headers.get('servername'),
                                                     'False')
-                app_logger.warning("{} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                app_logger.warning("uuidcode={} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                 return "", 539
             else:
-                app_logger.warning("{} - Could not get information about filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                app_logger.warning("uuidcode={} - Could not get information about filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                 raise Exception("{} - Could not get information about filedirectory. Throw Exception because of wrong status_code: {}".format(uuidcode, status_code))
         except:
             counter += 1
             if counter > 10:
-                app_logger.error("{} - Get filelist ({}) failed 10 times over 30 seconds. {} {}".format(uuidcode, request_headers.get('filedir'), method, remove_secret(method_args)))
-                app_logger.trace("{} - Call stop_job".format(uuidcode))
+                app_logger.error("uuidcode={} - Get filelist ({}) failed 10 times over 30 seconds. {} {}".format(uuidcode, request_headers.get('filedir'), method, remove_secret(method_args)))
+                app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app_logger,
                          uuidcode,
                          servername,
                          request_headers.get('system'),
                          request_headers,
                          app_urls)
-            app_logger.info("{} - Get filelist ({}) failed {} time(s)".format(uuidcode, request_headers.get('filedir'), counter))
+            app_logger.info("uuidcode={} - Get filelist ({}) failed {} time(s)".format(uuidcode, request_headers.get('filedir'), counter))
             hub_communication.status(app_logger,
                                      uuidcode,
                                      app_urls.get('hub', {}).get('url_proxy_route'),
@@ -186,8 +186,8 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     app_urls.get('orchestrator', {}).get('url_skip'),
                                                     request_headers.get('servername'),
                                                     'False')
-                app_logger.exception("{} - Could not create tunnel".format(uuidcode))
-                app_logger.trace("{} - Call stop_job".format(uuidcode))
+                app_logger.exception("uuidcode={} - Could not create tunnel".format(uuidcode))
+                app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 stop_job(app_logger,
                          uuidcode,
                          servername,
@@ -197,7 +197,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 return
             status = "running"
         else:
-            app_logger.info("{} - Update JupyterHub status ({})".format(uuidcode, "waitforhostname"))
+            app_logger.info("uuidcode={} - Update JupyterHub status ({})".format(uuidcode, "waitforhostname"))
             hub_communication.status(app_logger,
                                      uuidcode,
                                      app_urls.get('hub', {}).get('url_proxy_route'),
@@ -207,7 +207,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                      request_headers.get('escapedusername'),
                                      servername)
             continue
-        app_logger.info("{} - Update JupyterHub status ({})".format(uuidcode, status))
+        app_logger.info("uuidcode={} - Update JupyterHub status ({})".format(uuidcode, status))
         hub_communication.status(app_logger,
                                  uuidcode,
                                  app_urls.get('hub', {}).get('url_proxy_route'),
@@ -217,7 +217,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                  request_headers.get('escapedusername'),
                                  servername)
         if status in ['running', 'stopped'] and request_headers.get('spawning', 'true').lower() == 'true': # spawning is finished
-            app_logger.trace('{} - Tell J4J_Orchestrator that the spawning is done'.format(uuidcode))
+            app_logger.trace('uuidcode={} - Tell J4J_Orchestrator that the spawning is done'.format(uuidcode))
             try:
                 orchestrator_communication.set_spawning(app_logger,
                                                         uuidcode,
@@ -225,7 +225,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                         request_headers.get('servername'),
                                                         'False')
             except:
-                app_logger.exception("{} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
+                app_logger.exception("uuidcode={} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
         orchestrator_communication.set_skip(app_logger,
                                             uuidcode,
                                             app_urls.get('orchestrator', {}).get('url_skip'),
