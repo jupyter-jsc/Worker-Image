@@ -151,7 +151,15 @@ class Jobs(Resource):
                                                                                        method_args)
                     if status_code == 200:
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-                        children = json.loads(text).get('children', [])
+                        # in UNICORE 8 the answer is a bit different
+                        children_json = json.loads(text)
+                        if 'children' in children_json.keys():
+                            children = json.loads(text).get('children', [])
+                        elif 'content' in children_json.keys():
+                            children = list(json.loads(text).get('content', {}).keys())
+                        else:
+                            app.log.warning("uuidcode={} - Could not find any childrens in {}".format(uuidcode, text))
+                            children = []
                         if len(children) == 0 and i < 4:
                             app.log.debug("uuidcode={} - Received empty children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
