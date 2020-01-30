@@ -239,7 +239,15 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
         if status_code != 200:
             app_logger.warning("uuidcode={} - Could not save files from {}. Response from UNICORE: {} {} {}".format(uuidcode, kernelurl, text, status_code, remove_secret(response_header)))
             return
-        children = json.loads(text).get('children', [])
+        # in UNICORE 8 the answer is a bit different
+        children_json = json.loads(text)
+        if 'children' in children_json.keys():
+            children = json.loads(text).get('children', [])
+        elif 'content' in children_json.keys():
+            children = list(json.loads(text).get('content', {}).keys())
+        else:
+            app_logger.warning("uuidcode={} - Could not find any childrens in {}".format(uuidcode, text))
+            children = []
         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
     except:
         app_logger.exception("uuidcode={} - Could not save files from {}".format(uuidcode, kernelurl))
