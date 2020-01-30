@@ -125,7 +125,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     if request_json.get('partition') == 'LoginNode':
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
-        job['Job Type'] = 'interactive'
+        job['Job type'] = 'interactive'
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
 
