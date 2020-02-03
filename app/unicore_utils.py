@@ -102,9 +102,36 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     app_logger.trace("uuidcode={} - UNICORE/X Header: {}".format(uuidcode, unicore_header))
     return unicore_header, accesstoken, expire
 
+#
+def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_input):
+    app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
+    env_list = []
+    for key, value in request_json.get('Environment', {}).items():
+      env_list.append('{}={}'.format(key, value))
+    job = {'ApplicationName': 'Bash shell',
+           'Environment': env_list,
+           'Imports': []}
+    queue_support = get_queue_support()
+    if request_json.get('system') == "JUROPA":
+        job['Project'] = 'root'
+    for inp in unicore_input:
+        job['Imports'].append(
+            {
+                "From": "inline://dummy",
+                "To"  : inp.get('To'),
+                "Data": inp.get('Data'),
+            }
+        )
+    if request_json.get('partition') == 'LoginNode':
+        job['Executable'] = '/bin/bash'
+        job['Arguments'] = ['.start.sh']
+        job['Job type'] = 'interactive'
+        app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
+        return job
+
 # Create Job Dict
 def create_job(app_logger, uuidcode, request_json, project, unicore_input):
-    app_logger.debug("uuidcode={} - Create UNICORE/X Job.".format(uuidcode))
+    app_logger.debug("uuidcode={} - Create UNICORE/X-7 Job.".format(uuidcode))
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
            'Imports': []}
@@ -212,7 +239,15 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
         if status_code != 200:
             app_logger.warning("uuidcode={} - Could not save files from {}. Response from UNICORE: {} {} {}".format(uuidcode, kernelurl, text, status_code, remove_secret(response_header)))
             return
-        children = json.loads(text).get('children', [])
+        # in UNICORE 8 the answer is a bit different
+        children_json = json.loads(text)
+        if 'children' in children_json.keys():
+            children = json.loads(text).get('children', [])
+        elif 'content' in children_json.keys():
+            children = list(json.loads(text).get('content', {}).keys())
+        else:
+            app_logger.warning("uuidcode={} - Could not find any childrens in {}".format(uuidcode, text))
+            children = []
         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
     except:
         app_logger.exception("uuidcode={} - Could not save files from {}".format(uuidcode, kernelurl))

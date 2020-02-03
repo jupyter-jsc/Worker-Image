@@ -151,7 +151,15 @@ class Jobs(Resource):
                                                                                        method_args)
                     if status_code == 200:
                         unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
-                        children = json.loads(text).get('children', [])
+                        # in UNICORE 8 the answer is a bit different
+                        children_json = json.loads(text)
+                        if 'children' in children_json.keys():
+                            children = json.loads(text).get('children', [])
+                        elif 'content' in children_json.keys():
+                            children = list(json.loads(text).get('content', {}).keys())
+                        else:
+                            app.log.warning("uuidcode={} - Could not find any childrens in {}".format(uuidcode, text))
+                            children = []
                         if len(children) == 0 and i < 4:
                             app.log.debug("uuidcode={} - Received empty children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
@@ -360,11 +368,18 @@ class Jobs(Resource):
                 return "", 534
     
             # Create Job description
-            unicore_json = unicore_utils.create_job(app.log,
-                                                    uuidcode,
-                                                    request.json,
-                                                    request.headers.get('Project'),
-                                                    unicore_input)
+            if request.json.get('system') in utils_file_loads.get_unicore8_systems():
+                unicore_json = unicore_utils.create_unicore8_job(app.log,
+                                                                 uuidcode,
+                                                                 request.json,
+                                                                 request.headers.get('Project'),
+                                                                 unicore_input)
+            else:
+                unicore_json = unicore_utils.create_job(app.log,
+                                                        uuidcode,
+                                                        request.json,
+                                                        request.headers.get('Project'),
+                                                        unicore_input)
     
             # Get URL and certificate to communicate with UNICORE/X
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X url".format(uuidcode))

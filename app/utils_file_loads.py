@@ -71,3 +71,8 @@ def get_queue_support():
     with open('/etc/j4j/j4j_mount/j4j_worker/queue_support.json', 'r') as f:
         queue = json.load(f)
     return queue
+
+def get_unicore8_systems():
+    with open('/etc/j4j/j4j_mount/j4j_worker/unicore8.json', 'r') as f:
+        ret = json.load(f)
+    return ret.get('systems', [])
