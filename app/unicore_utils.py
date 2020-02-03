@@ -128,6 +128,18 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
         job['Job type'] = 'interactive'
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
+    if request_json.get('system').upper() in queue_support.get('supported', []):
+        job['Resources'] = { 'Queue': request_json.get('partition')}
+    else:
+        job['Resources'] = {}
+    if request_json.get('reservation', None):
+        job['Resources']['Reservation'] = request_json.get('reservation')
+    for key, value in request_json.get('Resources').items():
+        job['Resources'][key] = value
+    job['Executable'] = '/bin/bash'
+    job['Arguments'] = ['.start.sh']
+    app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
+    return job
 
 # Create Job Dict
 def create_job(app_logger, uuidcode, request_json, project, unicore_input):
