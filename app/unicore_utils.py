@@ -169,11 +169,12 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     else:
         job['Resources'] = {}
     if request_json.get('reservation', None):
-        job['Resources']['Reservation'] = request_json.get('reservation')
+        if len(request_json.get('reservation', '')) > 0 and request_json.get('reservation', 'none').lower() != 'none':
+            job['Resources']['Reservation'] = request_json.get('reservation')
     for key, value in request_json.get('Resources').items():
         job['Resources'][key] = value
     job['Executable'] = '.start.sh'
-    app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
+    app_logger.debug("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
     return job
 
 # Create Inputs files
