@@ -179,7 +179,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     return job
 
 # Create Inputs files
-def create_inputs(app_logger, uuidcode, request_json, tunnel_url_remote):
+def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote):
     app_logger.debug("uuidcode={} - Create Inputs for UNICORE/X.".format(uuidcode))
     inp = []
     nodes = get_nodes()
@@ -193,7 +193,7 @@ def create_inputs(app_logger, uuidcode, request_json, tunnel_url_remote):
     inp.append({ 'To': '.start.sh', 'Data': start_sh(app_logger,
                                                      uuidcode,
                                                      request_json.get('system'),
-                                                     request_json.get('project'),
+                                                     project,
                                                      request_json.get('Checkboxes'),
                                                      inps) })
     inp.append({ 'To': '.config.py', 'Data': get_config(app_logger,

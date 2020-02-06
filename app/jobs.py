@@ -355,6 +355,7 @@ class Jobs(Resource):
                 unicore_input = unicore_utils.create_inputs(app.log,
                                                             uuidcode,
                                                             request.json,
+                                                            request.headers.get('project'),
                                                             app.urls.get('tunnel', {}).get('url_remote'))
             except:
                 app.log.exception("uuidcode={} - Could not create input files for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
