@@ -179,7 +179,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     return job
 
 # Create Inputs files
-def create_inputs(app_logger, uuidcode, request_json, tunnel_url_remote):
+def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote):
     app_logger.debug("uuidcode={} - Create Inputs for UNICORE/X.".format(uuidcode))
     inp = []
     nodes = get_nodes()
@@ -193,6 +193,7 @@ def create_inputs(app_logger, uuidcode, request_json, tunnel_url_remote):
     inp.append({ 'To': '.start.sh', 'Data': start_sh(app_logger,
                                                      uuidcode,
                                                      request_json.get('system'),
+                                                     project,
                                                      request_json.get('Checkboxes'),
                                                      inps) })
     inp.append({ 'To': '.config.py', 'Data': get_config(app_logger,
@@ -299,7 +300,7 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
     return hostname
 
 
-def start_sh(app_logger, uuidcode, system, checkboxes, inputs):
+def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     app_logger.debug("uuidcode={} - Create start.sh file".format(uuidcode))
     startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
     startjupyter += 'hostname>.host;\n'
@@ -310,6 +311,7 @@ def start_sh(app_logger, uuidcode, system, checkboxes, inputs):
         with open(scriptpath, 'r') as f:
             script = f.read()
         startjupyter += script+'\n'
+    startjupyter += 'export JUPYTER_PATH=$PROJECT_{}/.local/share/jupyter:$JUPYTER_PATH\n'.format(project)
     if 'executable' in inputs.get(system.upper()).get('start').keys():
         startjupyter += inputs.get(system.upper()).get('start').get('executable')
     else:
