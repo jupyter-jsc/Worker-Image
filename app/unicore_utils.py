@@ -316,8 +316,8 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     startjupyter += 'hostname>.host;\n'
     project_link_list = utils_file_loads.get_project_link_list()
     if project in project_link_list:
-        startjupyter += "if ! [ -L ${{HOME}}/project_{} ]; then\n".format(project)
-        startjupyter += "  ln -s ${{PROJECT_{project}}} ${{HOME}}/project_{project}\n".format(project=project)
+        startjupyter += "if ! [ -e ${{HOME}}/PROJECT_{} ]; then\n".format(project)
+        startjupyter += "  ln -s ${{PROJECT_{project}}} ${{HOME}}/PROJECT_{project}\n".format(project=project)
         startjupyter += "fi\n"
     startjupyter += inputs.get(system.upper()).get('start').get('defaultmodules')+'\n'
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
