@@ -16,8 +16,9 @@ from app.utils_file_loads import get_nodes, get_jlab_conf, get_inputs,\
     get_hub_port, get_fastnet_changes, get_base_url, get_queue_support
 from app.tunnel_communication import get_remote_node
 from app.unity_communication import renew_token
-from app import unicore_communication
+from app import unicore_communication, utils_file_loads
 from app.utils import remove_secret
+import random
 
 def abort_job(app_logger, uuidcode, kernelurl, unicore_header, cert):
     app_logger.debug("uuidcode={} - Try to abort job with kernelurl: {}".format(uuidcode, kernelurl))
@@ -107,7 +108,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
     env_list = []
     for key, value in request_json.get('Environment', {}).items():
-      env_list.append('{}={}'.format(key, value))
+        env_list.append('{}={}'.format(key, value))
     job = {'ApplicationName': 'Bash shell',
            'Environment': env_list,
            'Imports': []}
@@ -119,13 +120,22 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
             {
                 "From": "inline://dummy",
                 "To"  : inp.get('To'),
-                "Data": inp.get('Data'),
+                "Data": inp.get('Data')
             }
         )
     if request_json.get('partition') == 'LoginNode':
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
         job['Job type'] = 'interactive'
+        for checkboxpath in request_json.get('Checkboxes', []):
+            if 'LoginNodeVIS' in checkboxpath:
+                loginnodevis = utils_file_loads.get_login_node_vis()
+                nodes = loginnodevis.get(request_json.get('system', '').upper(), [])
+                if len(nodes) > 0:
+                    # get system list ... choose one ... use it
+                    node = random.choice(nodes)
+                    app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
+                    job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
     if request_json.get('system').upper() in queue_support.get('supported', []):
@@ -304,9 +314,14 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     app_logger.debug("uuidcode={} - Create start.sh file".format(uuidcode))
     startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
     startjupyter += 'hostname>.host;\n'
+    project_link_list = utils_file_loads.get_project_link_list()
+    if project in project_link_list:
+        startjupyter += "if ! [ -L ${{HOME}}/project_{} ]; then\n".format(project)
+        startjupyter += "  ln -s ${{PROJECT_{project}}} ${{HOME}}/project_{project}\n".format(project=project)
+        startjupyter += "fi\n"
     startjupyter += inputs.get(system.upper()).get('start').get('defaultmodules')+'\n'
-    startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
+    startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
     for scriptpath in checkboxes:
         with open(scriptpath, 'r') as f:
             script = f.read()
