@@ -90,12 +90,15 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     'False')
                 app_logger.exception("uuidcode={} - Could not get properties. Try to stop it {} {}".format(uuidcode, method, remove_secret(method_args)))
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app_logger,
-                         uuidcode,
-                         servername,
-                         request_headers.get('system'),
-                         request_headers,
-                         app_urls)
+                try:
+                    stop_job(app_logger,
+                             uuidcode,
+                             servername,
+                             request_headers.get('system'),
+                             request_headers,
+                             app_urls)
+                except:
+                    app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
 
         if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
@@ -107,12 +110,15 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                 'False')
             app_logger.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
             app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
-            stop_job(app_logger,
-                     uuidcode,
-                     servername,
-                     request_headers.get('system'),
-                     request_headers,
-                     app_urls)
+            try:
+                stop_job(app_logger,
+                         uuidcode,
+                         servername,
+                         request_headers.get('system'),
+                         request_headers,
+                         app_urls)
+            except:
+                app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
             return "", 530
         
         try:
@@ -151,12 +157,15 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
             if counter > 10:
                 app_logger.error("uuidcode={} - Get filelist ({}) failed 10 times over 30 seconds. {} {}".format(uuidcode, request_headers.get('filedir'), method, remove_secret(method_args)))
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app_logger,
-                         uuidcode,
-                         servername,
-                         request_headers.get('system'),
-                         request_headers,
-                         app_urls)
+                try:
+                    stop_job(app_logger,
+                             uuidcode,
+                             servername,
+                             request_headers.get('system'),
+                             request_headers,
+                             app_urls)
+                except:
+                    app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
             app_logger.info("uuidcode={} - Get filelist ({}) failed {} time(s)".format(uuidcode, request_headers.get('filedir'), counter))
             hub_communication.status(app_logger,
                                      uuidcode,
@@ -196,12 +205,15 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     'False')
                 app_logger.exception("uuidcode={} - Could not create tunnel".format(uuidcode))
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app_logger,
-                         uuidcode,
-                         servername,
-                         request_headers.get('system'),
-                         request_headers,
-                         app_urls)
+                try:
+                    stop_job(app_logger,
+                             uuidcode,
+                             servername,
+                             request_headers.get('system'),
+                             request_headers,
+                             app_urls)
+                except:
+                    app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return
             status = "running"
         else:

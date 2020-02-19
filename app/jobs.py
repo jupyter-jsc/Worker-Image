@@ -79,12 +79,15 @@ class Jobs(Resource):
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
                                                                 request.headers.get('servername'),
                                                                 'False')
-                            stop_job(app.log,
-                                     uuidcode,
-                                     servername,
-                                     request.headers.get('system'),
-                                     request.headers,
-                                     app.urls)
+                            try:
+                                stop_job(app.log,
+                                         uuidcode,
+                                         servername,
+                                         request.headers.get('system'),
+                                         request.headers,
+                                         app.urls)
+                            except:
+                                app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                             return "", 539
                     elif status_code == 500:
                         if i < 4:
@@ -127,12 +130,15 @@ class Jobs(Resource):
                                                     app.urls.get('orchestrator', {}).get('url_skip'),
                                                     request.headers.get('servername'),
                                                     'False')
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.headers.get('system'),
+                             request.headers,
+                             app.urls)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 530
     
             # The Job is not finished yet (good)
@@ -182,7 +188,7 @@ class Jobs(Resource):
                             app.log.debug("uuidcode={} - Could not get children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.exception("uuidcode={} - Could not get information about filedirectory. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.error("uuidcode={} - Could not get children list. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -190,19 +196,22 @@ class Jobs(Resource):
                                                                 'False')
                             return "", 539
                 except:
-                    app.log.exception("uuidcode={} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                    app.log.exception("uuidcode={} - Could not get children list. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                     orchestrator_communication.set_skip(app.log,
                                                         uuidcode,
                                                         app.urls.get('orchestrator', {}).get('url_skip'),
                                                         request.headers.get('servername'),
                                                         'False')
-                    stop_job(app.log,
-                             uuidcode,
-                             servername,
-                             request.headers.get('system'),
-                             request.headers,
-                             app.urls)
+                    try:
+                        stop_job(app.log,
+                                 uuidcode,
+                                 servername,
+                                 request.headers.get('system'),
+                                 request.headers,
+                                 app.urls)
+                    except:
+                        app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                     return "", 539
     
     
@@ -257,12 +266,15 @@ class Jobs(Resource):
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
                                                                 request.headers.get('servername'),
                                                                 'False')
-                            stop_job(app.log,
-                                     uuidcode,
-                                     servername,
-                                     request.headers.get('system'),
-                                     request.headers,
-                                     app.urls)
+                            try:
+                                stop_job(app.log,
+                                         uuidcode,
+                                         servername,
+                                         request.headers.get('system'),
+                                         request.headers,
+                                         app.urls)
+                            except:
+                                app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                             return "", 539
                     status = 'running'
                 else:
@@ -310,12 +322,15 @@ class Jobs(Resource):
             else:
                 app.log.warning('uuidcode={} - Unknown JobStatus: {}'.format(uuidcode, properties_json.get('status')))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.headers.get('system'),
+                             request.headers,
+                             app.urls)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
             if status != 'waitforhostname': # no thread was started, so the check is finished
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
@@ -360,16 +375,20 @@ class Jobs(Resource):
             except:
                 app.log.exception("uuidcode={} - Could not create input files for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 534
     
             # Create Job description
-            if request.json.get('system') in utils_file_loads.get_unicore8_systems():
+            unicore_file = utils_file_loads.get_unicorex()
+            if unicore_file.get(request.json.get('system').upper(), {}).get("UNICORE8", False):
                 unicore_json = unicore_utils.create_unicore8_job(app.log,
                                                                  uuidcode,
                                                                  request.json,
@@ -420,12 +439,15 @@ class Jobs(Resource):
             except:
                 app.log.exception("uuidcode={} - Could not submit Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
     
             # get properties of job
@@ -459,12 +481,15 @@ class Jobs(Resource):
                 except:
                     app.log.exception("uuidcode={} - Could not get properties of Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                    stop_job(app.log,
-                             uuidcode,
-                             servername,
-                             request.json.get('system'),
-                             request.headers,
-                             app.urls)
+                    try:
+                        stop_job(app.log,
+                                 uuidcode,
+                                 servername,
+                                 request.json.get('system'),
+                                 request.headers,
+                                 app.urls)
+                    except:
+                        app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                     return "", 539
     
     
@@ -490,12 +515,15 @@ class Jobs(Resource):
             except:
                 app.log.exception("uuidcode={} - Could not get filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
     
             return "", 201, {'kernelurl': kernelurl,

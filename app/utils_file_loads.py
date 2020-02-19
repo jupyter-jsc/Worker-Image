@@ -67,24 +67,3 @@ def get_unity():
         unity = json.load(f)
     return unity
 
-def get_queue_support():
-    with open('/etc/j4j/j4j_mount/j4j_worker/queue_support.json', 'r') as f:
-        queue = json.load(f)
-    return queue
-
-def get_unicore8_systems():
-    with open('/etc/j4j/j4j_mount/j4j_worker/unicore8.json', 'r') as f:
-        ret = json.load(f)
-    return ret.get('systems', [])
-
-def get_project_link_list():
-    with open('/etc/j4j/j4j_mount/j4j_worker/projectlinklist.json', 'r') as f:
-        ret = json.load(f)
-    return ret
-
-def get_login_node_vis(system):
-    with open('/etc/j4j/j4j_mount/j4j_worker/LoginNodeVIS.json', 'r') as f:
-        loginnodevis = json.load(f)
-    return loginnodevis.get(system.upper(), [])
-
-

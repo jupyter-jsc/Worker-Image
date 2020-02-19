@@ -4,14 +4,7 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
     app_logger.trace("uuidcode={} - Create UNICORE Header".format(uuidcode))
     if ':' not in servername:
         servername = "{}:{}".format(request_headers.get('escapedusername'), servername)
-    
-    unicore_header, accesstoken, expire = unicore_utils.create_header(app_logger,
-                                                                      uuidcode,
-                                                                      request_headers,
-                                                                      app_urls.get('hub', {}).get('url_proxy_route'),
-                                                                      app_urls.get('hub', {}).get('url_token'),
-                                                                      request_headers.get('escapedusername'),
-                                                                      servername)
+        
     if send_cancel:
         app_logger.debug("uuidcode={} - Send cancel to JupyterHub".format(uuidcode))
         hub_communication.cancel(app_logger,
@@ -22,6 +15,14 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                  "JupyterLab named {} was stopped".format(servername),
                                  request_headers.get('escapedusername'),
                                  servername)
+    unicore_header, accesstoken, expire = unicore_utils.create_header(app_logger,
+                                                                      uuidcode,
+                                                                      request_headers,
+                                                                      app_urls.get('hub', {}).get('url_proxy_route'),
+                                                                      app_urls.get('hub', {}).get('url_token'),
+                                                                      request_headers.get('escapedusername'),
+                                                                      servername)
+
 
     # Get certificate path to communicate with UNICORE/X Server
     app_logger.trace("uuidcode={} - FileLoad: UNICORE/X certificate path".format(uuidcode))

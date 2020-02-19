@@ -13,7 +13,7 @@ import json
 
 
 from app.utils_file_loads import get_nodes, get_jlab_conf, get_inputs,\
-    get_hub_port, get_fastnet_changes, get_base_url, get_queue_support
+    get_hub_port, get_fastnet_changes, get_base_url
 from app.tunnel_communication import get_remote_node
 from app.unity_communication import renew_token
 from app import unicore_communication, utils_file_loads
@@ -112,9 +112,14 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     job = {'ApplicationName': 'Bash shell',
            'Environment': env_list,
            'Imports': []}
-    queue_support = get_queue_support()
-    if request_json.get('system') == "JUROPA":
-        job['Project'] = 'root'
+    unicorex_info = utils_file_loads.get_unicorex()
+    if unicorex_info.get(request_json.get('system').upper(), {}).get('set_project', False):
+        if unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get('ALL', '') != '':
+            job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get('ALL', '')
+        elif unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '') != '':
+            job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '')
+        else:
+            job['Project'] = project[1:]
     for inp in unicore_input:
         job['Imports'].append(
             {
@@ -129,8 +134,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
         job['Job type'] = 'interactive'
         for checkboxpath in request_json.get('Checkboxes', []):
             if 'LoginNodeVIS' in checkboxpath:
-                loginnodevis = utils_file_loads.get_login_node_vis()
-                nodes = loginnodevis.get(request_json.get('system', '').upper(), [])
+                nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
                 if len(nodes) > 0:
                     # get system list ... choose one ... use it
                     node = random.choice(nodes)
@@ -138,7 +142,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
                     job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
-    if request_json.get('system').upper() in queue_support.get('supported', []):
+    if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
         job['Resources'] = {}
@@ -158,8 +162,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     job = {'ApplicationName': 'Jupyter4JSC',
            'Environment': request_json.get('Environment', {}),
            'Imports': []}
-
-    queue_support = get_queue_support()
+    unicorex_info = utils_file_loads.get_unicorex()
 
     for inp in unicore_input:
         job['Imports'].append(
@@ -175,7 +178,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
         job['Executable'] = 'bash .start.sh'
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
-    if request_json.get('system').upper() in queue_support.get('supported', []):
+    if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
         job['Resources'] = { 'Queue': request_json.get('partition')}
     else:
         job['Resources'] = {}
@@ -314,7 +317,8 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     app_logger.debug("uuidcode={} - Create start.sh file".format(uuidcode))
     startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
     startjupyter += 'hostname>.host;\n'
-    project_link_list = utils_file_loads.get_project_link_list()
+    unicorex_info = utils_file_loads.get_unicorex()
+    project_link_list = unicorex_info.get(system.upper(), {}).get("projectLinks", [])
     if project in project_link_list:
         startjupyter += "if ! [ -e ${{HOME}}/PROJECT_{} ]; then\n".format(project)
         startjupyter += "  ln -s ${{PROJECT_{project}}} ${{HOME}}/PROJECT_{project}\n".format(project=project)
