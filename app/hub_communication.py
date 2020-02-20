@@ -186,4 +186,7 @@ def cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jh
     except requests.exceptions.ConnectTimeout:
         app_logger.exception("uuidcode={} - Timeout reached (1800). Could not send cancel to JupyterHub. Url: {}, Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
     except:
-        app_logger.exception("uuidcode={} - Could not send cancel to JupyterHub. Url: {}, Headers: {}".format(uuidcode, url, remove_secret(hub_header)))
+        if errormsg != "":
+            cancel(app_logger, uuidcode, app_hub_url_proxy_route, app_hub_url_cancel, jhubtoken, "", username, server_name)
+        else:
+            app_logger.exception("uuidcode={} - Could not send cancel to JupyterHub. Url: {}, Headers: {}".format(uuidcode, url, remove_secret(hub_header)))

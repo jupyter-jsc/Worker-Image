@@ -131,7 +131,7 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 error_msg = ""
                 if properties_json.get('status') in ['FAILED']:
-                    error_msg = properties_json.get('statusMessage')
+                    error_msg = properties_json.get('statusMessage').split('<')[1].split(':\n>')[0]
                 else:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 try:
