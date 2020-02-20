@@ -126,15 +126,22 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                 app_urls.get('orchestrator', {}).get('url_skip'),
                                                 request_headers.get('servername'),
                                                 'False')
-            app_logger.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
+            app_logger.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub.\n{}'.format(uuidcode, properties_json.get('status'), properties_json))
             app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
+            error_msg = ""
+            if properties_json.get('status') in ['FAILED']:
+                error_msg = properties_json.get('statusMessage')
+            else:
+                error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
             try:
                 stop_job(app_logger,
                          uuidcode,
                          servername,
                          request_headers.get('system'),
                          request_headers,
-                         app_urls)
+                         app_urls,
+                         True,
+                         error_msg)
             except:
                 app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
             return "", 530
