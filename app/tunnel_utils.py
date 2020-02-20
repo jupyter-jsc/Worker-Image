@@ -31,7 +31,7 @@ def create(app_logger, uuidcode, app_hub_url_proxy_route, app_tunnel_url, app_hu
             unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
             hostname = content.strip()
     except:
-        app_logger.exception("uuidcode={} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
+        app_logger.exception("uuidcode={} - Could not get hostname. {} {}".format(uuidcode, method, remove_secret(method_args)))
         app_logger.warning("uuidcode={} - Send cancel to JupyterHub.".format(uuidcode))
         hub_communication.cancel(app_logger,
                                  uuidcode,

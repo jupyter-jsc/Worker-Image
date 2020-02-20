@@ -12,7 +12,8 @@ from contextlib import closing
 
 from app.utils_file_loads import get_unity
 from app import hub_communication
-from app.utils import remove_secret
+from app.utils import remove_secret, SpawnException
+import json
 
 
 def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, accesstoken, expire, jhubtoken, app_hub_url_proxy_route, app_hub_url_token, username, servername=''):
@@ -42,6 +43,21 @@ def renew_token(app_logger, uuidcode, token_url, authorize_url, refreshtoken, ac
                                    verify = cert_path,
                                    timeout = 1800)) as r:
             app_logger.trace("uuidcode={} - Unity Response: {} {} {} {}".format(uuidcode, r.text, r.status_code, remove_secret(r.headers), remove_secret(r.json)))
+            if r.status_code == 400:
+                # wrong refresh_token, send cancel
+                error_msg = "Unknown Error. An Administrator is informed."
+                try:
+                    r_json = json.loads(r.text)
+                    if r_json.get('error_description', '') != "Invalid request; wrong refresh token":
+                        app_logger.error("uuidcode={} - Received unknown answer from Unity: {}".format(uuidcode, r.text))
+                    else:
+                        error_msg = "Invalid token. Please logout and login again."
+                except:
+                    try:
+                        app_logger.exception("uuidcode={} - Could not check for Unity error description: {}".format(uuidcode, r.text))
+                    except:
+                        app_logger.exception("uuidcode={} - Could not check for Unity error description".format(uuidcode))
+                raise SpawnException(error_msg)
             accesstoken = r.json().get('access_token')
         with closing(requests.get(tokeninfo_url,
                                   headers = { 'Authorization': 'Bearer {}'.format(accesstoken) },

@@ -73,9 +73,25 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                             app_urls.get('orchestrator', {}).get('url_skip'),
                                                             request_headers.get('servername'),
                                                             'False')
-                        app_logger.warning("uuidcode={} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        app_logger.error("uuidcode={} - Could not get properties. 404 Not found. Do nothing and return. {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        return "", 539
+                elif status_code == 500:
+                    if i < 4:
+                        app_logger.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
+                        time.sleep(2)
+                    else:
+                        app_logger.error("uuidcode={} - UNICORE RESTART REQUIRED!!. system: {}".format(uuidcode, request_headers.get('system', '<system_unknown>')))
+                        app_logger.warning("uuidcode={} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                        app_logger.warning("uuidcode={} - Do not send update to JupyterHub.".format(uuidcode))
+                        # If JupyterHub don't receives an update for a long time it can stop the job itself.
+                        orchestrator_communication.set_skip(app_logger,
+                                                            uuidcode,
+                                                            app_urls.get('orchestrator', {}).get('url_skip'),
+                                                            request_headers.get('servername'),
+                                                            'False')
                         return "", 539
                 else:
+                    app_logger.error("uuidcode={} - Unknown status_code. Add case for this".format(uuidcode))
                     if i < 4:
                         app_logger.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                         time.sleep(2)
@@ -96,7 +112,9 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                              servername,
                              request_headers.get('system'),
                              request_headers,
-                             app_urls)
+                             app_urls,
+                             True,
+                             "Jupyter@JSC backend error. An administrator is informed. Please try again in a few minutes.")
                 except:
                     app_logger.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
