@@ -41,12 +41,8 @@ class Jobs(Resource):
                                                                                   app.urls.get('hub', {}).get('url_token'),
                                                                                   request.headers.get('escapedusername'),
                                                                                   servername)
-            except (SpawnException, Exception) as e:
-                if type(e).__name__ == "SpawnException":
-                    err_msg = str(e)
-                else:
-                    err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes"
-                app.log.exception("uuidcode={} - err_msg: {} - Could not Create Header. Token from user {} might be revoked. Do nothing and return.".format(uuidcode, err_msg, request.headers.get('escapedusername')))
+            except (SpawnException, Exception):
+                app.log.exception("uuidcode={} - Could not Create Header. Token from user {} might be revoked. Do nothing and return.".format(uuidcode, request.headers.get('escapedusername')))
                 # Return positive status: Administrator is informed and there is nothing we can do here otherwise.
                 return "", 200
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X certificate path".format(uuidcode))
@@ -143,6 +139,11 @@ class Jobs(Resource):
                                                     app.urls.get('orchestrator', {}).get('url_skip'),
                                                     request.headers.get('servername'),
                                                     'False')
+                error_msg = ""
+                if properties_json.get('status') in ['FAILED']:
+                    error_msg = properties_json.get('statusMessage')
+                else:
+                    error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 try:
                     stop_job(app.log,
                              uuidcode,
@@ -151,7 +152,7 @@ class Jobs(Resource):
                              request.headers,
                              app.urls,
                              True,
-                             "Could not start UNICORE/X Job. An administrator is informed. Please try again in a few minutes.")
+                             error_msg)
                 except:
                     app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 530
