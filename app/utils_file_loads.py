@@ -32,11 +32,6 @@ def get_base_url():
         base = json.load(f)
     return base.get('base_url', '/')
 
-def get_nodes():
-    with open('/etc/j4j/j4j_mount/j4j_common/nodes.json', 'r') as f:
-        nodes = json.load(f)
-    return nodes
-
 def get_unicorex():
     with open('/etc/j4j/j4j_mount/j4j_common/unicore.json', 'r') as f:
         data = json.load(f)

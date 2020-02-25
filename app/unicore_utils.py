@@ -12,7 +12,7 @@ import uuid
 import json
 
 
-from app.utils_file_loads import get_nodes, get_jlab_conf, get_inputs,\
+from app.utils_file_loads import get_unicorex, get_jlab_conf, get_inputs,\
     get_hub_port, get_fastnet_changes, get_base_url
 from app.tunnel_communication import get_remote_node
 from app.unity_communication import renew_token
@@ -195,20 +195,21 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
 def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote):
     app_logger.debug("uuidcode={} - Create Inputs for UNICORE/X.".format(uuidcode))
     inp = []
-    nodes = get_nodes()
+    ux = get_unicorex()
+    nodes = ux.get(request_json.get('system').upper(), {}).get('nodes', [])
     baseconf = get_jlab_conf()
     inps = get_inputs()
     node = get_remote_node(app_logger,
                            uuidcode,
                            tunnel_url_remote,
-                           nodes.get(request_json.get('system').upper()))
-
+                           nodes)
     inp.append({ 'To': '.start.sh', 'Data': start_sh(app_logger,
                                                      uuidcode,
                                                      request_json.get('system'),
                                                      project,
                                                      request_json.get('Checkboxes'),
                                                      inps) })
+
     inp.append({ 'To': '.config.py', 'Data': get_config(app_logger,
                                                         uuidcode,
                                                         baseconf,
@@ -315,9 +316,10 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
 
 def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     app_logger.debug("uuidcode={} - Create start.sh file".format(uuidcode))
+    unicorex_info = utils_file_loads.get_unicorex()
     startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
     startjupyter += 'hostname>.host;\n'
-    unicorex_info = utils_file_loads.get_unicorex()
+    startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('precommands', '')+'\n'
     project_link_list = unicorex_info.get(system.upper(), {}).get("projectLinks", [])
     if project in project_link_list:
         startjupyter += "if ! [ -e ${{HOME}}/PROJECT_{} ]; then\n".format(project)
