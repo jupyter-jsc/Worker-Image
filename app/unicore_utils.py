@@ -216,10 +216,6 @@ def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote
                                                         request_json.get('port'),
                                                         node,
                                                         request_json.get('Environment', {}).get('JUPYTERHUB_USER')) })
-    inp.append({ 'To': '.jbashrc', 'Data': jbashrc(app_logger,
-                                                   uuidcode,
-                                                   request_json.get('system'),
-                                                   inps) })
     inp.append({ 'To': '.jupyter.token', 'Data': request_json.get('Environment').get('JUPYTERHUB_API_TOKEN') })
     try:
         del request_json['Environment']['JUPYTERHUB_API_TOKEN']
@@ -341,11 +337,4 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
     startjupyter += '\necho "end">.end\n'
     app_logger.trace("uuidcode={} - start.sh file: {}".format(uuidcode, startjupyter.replace("\n", "/n")))
     return startjupyter
-
-def jbashrc(app_logger, uuidcode, system, inputs):
-    app_logger.debug("uuidcode={} - Create jbashrc file".format(uuidcode))
-    jbashrc = '#!/bin/bash\n'
-    jbashrc += inputs.get(system.upper()).get('jbashrc').get('defaultmodules')+'\n'
-    app_logger.trace("uuidcode={} - jbashrc file: {}".format(uuidcode, jbashrc.replace("\n", "/n")))
-    return jbashrc
 
