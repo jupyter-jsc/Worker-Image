@@ -9,7 +9,7 @@ import time
 import json
 
 from app import unicore_communication, hub_communication,\
-    tunnel_utils, orchestrator_communication
+    tunnel_utils, orchestrator_communication, utils_file_loads
 from app.unity_communication import renew_token
 from app.utils import remove_secret
 from app.jobs_utils import stop_job
@@ -130,9 +130,13 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                 app_logger.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub.\n{}'.format(uuidcode, properties_json.get('status'), properties_json))
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 error_msg = ""
-                if properties_json.get('status') in ['FAILED']:
-                    error_msg = properties_json.get('statusMessage').split('<')[1].split(':\n>')[0]
-                else:
+                try:
+                    mem = utils_file_loads.map_error_messages()
+                    if properties_json.get('status') in ['FAILED'] and properties_json.get('statusMessage') in mem.keys():
+                        error_msg = mem.get(properties_json.get('statusMessage', ''), "Could not start your Job. Please check your configuration. An administrator is informed.")
+                    else:
+                        error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
+                except:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 try:
                     stop_job(app_logger,
