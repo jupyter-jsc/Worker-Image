@@ -145,6 +145,7 @@ class Jobs(Resource):
                     if properties_json.get('status') in ['FAILED'] and properties_json.get('statusMessage') in mem.keys():
                         error_msg = mem.get(properties_json.get('statusMessage', ''), "Could not start your Job. Please check your configuration. An administrator is informed.")
                     else:
+                        app.log.error("uuidcode={} - StatusMessage from Failed UNICORE Job not found in /etc/j4j/j4j_mount/j4j_worker/map_error_messages.json. Please update to have a better user experience".format(uuidcode))
                         error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 except:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
