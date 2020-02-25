@@ -140,9 +140,13 @@ class Jobs(Resource):
                                                     request.headers.get('servername'),
                                                     'False')
                 error_msg = ""
-                if properties_json.get('status') in ['FAILED']:
-                    error_msg = properties_json.get('statusMessage').split('<')[1].split(':\n>')[0]
-                else:
+                try:
+                    mem = utils_file_loads.map_error_messages()
+                    if properties_json.get('status') in ['FAILED'] and properties_json.get('statusMessage') in mem.keys():
+                        error_msg = mem.get(properties_json.get('statusMessage', ''), "Could not start your Job. Please check your configuration. An administrator is informed.")
+                    else:
+                        error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
+                except:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 try:
                     stop_job(app.log,

@@ -62,3 +62,10 @@ def get_unity():
         unity = json.load(f)
     return unity
 
+
+def map_error_messages():
+    with open('/etc/j4j/j4j_mount/j4j_worker/map_error_messages.json', 'r') as f:
+        ret = json.load(f)
+    return ret
+
+
