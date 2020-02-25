@@ -32,11 +32,6 @@ def get_base_url():
         base = json.load(f)
     return base.get('base_url', '/')
 
-def get_nodes():
-    with open('/etc/j4j/j4j_mount/j4j_common/nodes.json', 'r') as f:
-        nodes = json.load(f)
-    return nodes
-
 def get_unicorex():
     with open('/etc/j4j/j4j_mount/j4j_common/unicore.json', 'r') as f:
         data = json.load(f)
@@ -66,25 +61,4 @@ def get_unity():
     with open('/etc/j4j/j4j_mount/j4j_common/unity.json', 'r') as f:
         unity = json.load(f)
     return unity
-
-def get_queue_support():
-    with open('/etc/j4j/j4j_mount/j4j_worker/queue_support.json', 'r') as f:
-        queue = json.load(f)
-    return queue
-
-def get_unicore8_systems():
-    with open('/etc/j4j/j4j_mount/j4j_worker/unicore8.json', 'r') as f:
-        ret = json.load(f)
-    return ret.get('systems', [])
-
-def get_project_link_list():
-    with open('/etc/j4j/j4j_mount/j4j_worker/projectlinklist.json', 'r') as f:
-        ret = json.load(f)
-    return ret
-
-def get_login_node_vis(system):
-    with open('/etc/j4j/j4j_mount/j4j_worker/LoginNodeVIS.json', 'r') as f:
-        loginnodevis = json.load(f)
-    return loginnodevis.get(system.upper(), [])
-
 

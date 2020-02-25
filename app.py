@@ -39,7 +39,7 @@ mail_handler = SMTPHandler(
 )
 mail_handler.setLevel(logging.ERROR)
 mail_handler.setFormatter(logging.Formatter(
-    '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    '[%(asctime)s] %(levelname)s in %(filename)s ( Line=%(lineno)d ): %(message)s'
 ))
 
 # Override logging.config.file_config, so that the logfilename will be send to the parser, each time the logging.conf will be updated

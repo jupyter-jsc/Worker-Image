@@ -12,7 +12,7 @@ from flask import request
 from flask_restful import Resource
 from flask import current_app as app
 
-from app.utils import validate_auth, remove_secret
+from app.utils import validate_auth, remove_secret, SpawnException
 from app.jobs_utils import stop_job
 from app import unicore_utils, utils_file_loads, unicore_communication,\
     hub_communication, tunnel_utils, jobs_threads, orchestrator_communication
@@ -30,17 +30,21 @@ class Jobs(Resource):
             validate_auth(app.log,
                           uuidcode,
                           request.headers.get('intern-authorization'))
-    
             servername = request.headers.get('servername')
     
             # Create UNICORE header and get certificate
-            unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,     # @UnusedVariable
-                                                                              uuidcode,
-                                                                              request.headers,
-                                                                              app.urls.get('hub', {}).get('url_proxy_route'),
-                                                                              app.urls.get('hub', {}).get('url_token'),
-                                                                              request.headers.get('escapedusername'),
-                                                                              servername)
+            try:
+                unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,     # @UnusedVariable
+                                                                                  uuidcode,
+                                                                                  request.headers,
+                                                                                  app.urls.get('hub', {}).get('url_proxy_route'),
+                                                                                  app.urls.get('hub', {}).get('url_token'),
+                                                                                  request.headers.get('escapedusername'),
+                                                                                  servername)
+            except (SpawnException, Exception):
+                app.log.exception("uuidcode={} - Could not Create Header. Token from user {} might be revoked. Do nothing and return.".format(uuidcode, request.headers.get('escapedusername')))
+                # Return positive status: Administrator is informed and there is nothing we can do here otherwise.
+                return "", 200
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X certificate path".format(uuidcode))
             unicorex = utils_file_loads.get_unicorex()
             cert = unicorex.get(request.headers.get('system', ''), {}).get('certificate', False)
@@ -79,18 +83,25 @@ class Jobs(Resource):
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
                                                                 request.headers.get('servername'),
                                                                 'False')
-                            stop_job(app.log,
-                                     uuidcode,
-                                     servername,
-                                     request.headers.get('system'),
-                                     request.headers,
-                                     app.urls)
+                            try:
+                                stop_job(app.log,
+                                         uuidcode,
+                                         servername,
+                                         request.headers.get('system'),
+                                         request.headers,
+                                         app.urls,
+                                         True,
+                                         '',
+                                         False)
+                            except:
+                                app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                             return "", 539
                     elif status_code == 500:
                         if i < 4:
                             app.log.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
                         else:
+                            app.log.error("uuidcode={} - UNICORE RESTART REQUIRED!!. system: {}".format(uuidcode, request.headers.get('system', '<system_unknown>')))
                             app.log.warning("uuidcode={} - Could not get properties. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             app.log.warning("uuidcode={} - Do not send update to JupyterHub.".format(uuidcode))
                             # If JupyterHub don't receives an update for a long time it can stop the job itself.
@@ -101,6 +112,7 @@ class Jobs(Resource):
                                                                 'False')
                             return "", 539
                     else:
+                        app.log.error("uuidcode={} - Unknown status_code received. Add case for this: {} {}".format(uuidcode, status_code, text))
                         if i < 4:
                             app.log.debug("uuidcode={} - Could not get properties. Sleep for 2 seconds and try again".format(uuidcode))
                             sleep(2)
@@ -120,19 +132,29 @@ class Jobs(Resource):
     
             if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
                 # Job is Finished for UNICORE, so it should be for JupyterHub
-                app.log.warning('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub'.format(uuidcode, properties_json.get('status')))
+                app.log.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
                                                     app.urls.get('orchestrator', {}).get('url_skip'),
                                                     request.headers.get('servername'),
                                                     'False')
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers.get('system'),
-                         request.headers,
-                         app.urls)
+                error_msg = ""
+                if properties_json.get('status') in ['FAILED']:
+                    error_msg = properties_json.get('statusMessage').split('<')[1].split(':\n>')[0]
+                else:
+                    error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.headers.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             error_msg)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 530
     
             # The Job is not finished yet (good)
@@ -177,12 +199,25 @@ class Jobs(Resource):
                                                                 request.headers.get('servername'),
                                                                 'False')
                             return "", 539
+                    elif status_code == 500:
+                        if i < 4:
+                            app.log.debug("uuidcode={} - Could not get children list. Status Code 500. Try again in 2 seconds.".format(uuidcode))
+                            sleep(2)
+                        else:
+                            app.log.error("uuidcode={} - UNICORE/X RESTART REQUIRED".format(uuidcode))
+                            orchestrator_communication.set_skip(app.log,
+                                                                uuidcode,
+                                                                app.urls.get('orchestrator', {}).get('url_skip'),
+                                                                request.headers.get('servername'),
+                                                                'False')
+                            return "", 539
                     else:
                         if i < 4:
                             app.log.debug("uuidcode={} - Could not get children list. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
                         else:
-                            app.log.exception("uuidcode={} - Could not get information about filedirectory. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
+                            app.log.error("uuidcode={} - Unknown status code. Add case for this: {} {}".format(status_code, text))
+                            app.log.error("uuidcode={} - Could not get children list. Do nothing and return. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                             orchestrator_communication.set_skip(app.log,
                                                                 uuidcode,
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
@@ -190,19 +225,13 @@ class Jobs(Resource):
                                                                 'False')
                             return "", 539
                 except:
-                    app.log.exception("uuidcode={} - Could not get information about filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
-                    app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
+                    app.log.error("uuidcode={} - UNICORE/X RESTART REQUIRED".format(uuidcode))
+                    app.log.exception("uuidcode={} - Could not get children list. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     orchestrator_communication.set_skip(app.log,
                                                         uuidcode,
                                                         app.urls.get('orchestrator', {}).get('url_skip'),
                                                         request.headers.get('servername'),
                                                         'False')
-                    stop_job(app.log,
-                             uuidcode,
-                             servername,
-                             request.headers.get('system'),
-                             request.headers,
-                             app.urls)
                     return "", 539
     
     
@@ -257,12 +286,17 @@ class Jobs(Resource):
                                                                 app.urls.get('orchestrator', {}).get('url_skip'),
                                                                 request.headers.get('servername'),
                                                                 'False')
-                            stop_job(app.log,
-                                     uuidcode,
-                                     servername,
-                                     request.headers.get('system'),
-                                     request.headers,
-                                     app.urls)
+                            try:
+                                stop_job(app.log,
+                                         uuidcode,
+                                         servername,
+                                         request.headers.get('system'),
+                                         request.headers,
+                                         app.urls,
+                                         True,
+                                         "Jupyter@JSC internal error. An administrator is informed. Please try again in a few minutes.")
+                            except:
+                                app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                             return "", 539
                     status = 'running'
                 else:
@@ -308,14 +342,19 @@ class Jobs(Resource):
                         app.log.exception("uuidcode={} - Could not set spawning to false in J4J_Orchestrator database for {}".format(uuidcode, request_headers.get('servername')))
     
             else:
-                app.log.warning('uuidcode={} - Unknown JobStatus: {}'.format(uuidcode, properties_json.get('status')))
+                app.log.error('uuidcode={} - Unknown JobStatus: {}'.format(uuidcode, properties_json.get('status')))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.headers.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.headers.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             "A backend Service had a problem. An administrator is informed. Please try it again in a few minutes.")
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
             if status != 'waitforhostname': # no thread was started, so the check is finished
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
@@ -341,14 +380,35 @@ class Jobs(Resource):
     
             servername = request.headers.get('servername')
             # Create header for unicore job
-            unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
-                                                                              uuidcode,
-                                                                              request.headers,
-                                                                              app.urls.get('hub', {}).get('url_proxy_route'),
-                                                                              app.urls.get('hub', {}).get('url_token'),
-                                                                              request.headers.get('escapedusername'),
-                                                                              servername)
-    
+            try:
+                unicore_header, accesstoken, expire = unicore_utils.create_header(app.log,  # @UnusedVariable
+                                                                                  uuidcode,
+                                                                                  request.headers,
+                                                                                  app.urls.get('hub', {}).get('url_proxy_route'),
+                                                                                  app.urls.get('hub', {}).get('url_token'),
+                                                                                  request.headers.get('escapedusername'),
+                                                                                  servername)
+            except (SpawnException, Exception) as e:
+                if type(e).__name__ == "SpawnException":
+                    err_msg = str(e)
+                else:
+                    err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes"
+                app.log.exception("uuidcode={} - Could not create header for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
+                app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             err_msg,
+                             False)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
+                # Return positive status: Administrator is informed and there is nothing we can do here otherwise.
+                return "", 200
     
             # Create input files for the job. A working J4J_tunnel webservice is required
             try:
@@ -357,19 +417,30 @@ class Jobs(Resource):
                                                             request.json,
                                                             request.headers.get('project'),
                                                             app.urls.get('tunnel', {}).get('url_remote'))
-            except:
+            except (SpawnException, Exception) as e:
+                if type(e).__name__ == "SpawnException":
+                    err_msg = str(e)
+                else:
+                    err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes."
                 app.log.exception("uuidcode={} - Could not create input files for UNICORE/X Job. {} {}".format(uuidcode, remove_secret(request.json), app.urls.get('tunnel', {}).get('url_remote')))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             err_msg,
+                             False)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 534
     
             # Create Job description
-            if request.json.get('system') in utils_file_loads.get_unicore8_systems():
+            unicore_file = utils_file_loads.get_unicorex()
+            if unicore_file.get(request.json.get('system').upper(), {}).get("UNICORE8", False):
                 unicore_json = unicore_utils.create_unicore8_job(app.log,
                                                                  uuidcode,
                                                                  request.json,
@@ -413,19 +484,35 @@ class Jobs(Resource):
                                                                                    method_args)
                 if status_code != 201:
                     app.log.warning("uuidcode={} - Could not submit Job. Response from UNICORE/X: {} {} {}.".format(uuidcode, text, status_code, remove_secret(response_header)))
-                    raise Exception("{} - Could not submit Job. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
+                    if status_code == 500:
+                        app.log.error("uuidcode={} - UNICORE RESTART REQUIRED!! {}".format(uuidcode, request.json.get('system', '<system_unknown>')))
+                    elif status_code == 403 or status_code == 432:
+                        raise SpawnException("Invalid token. Please logout and login again.")
+                    else:
+                        app.log.error("uuidcode={} - Unexpected status_code. Add case for this status_code.".format(uuidcode))
+                    raise SpawnException("A backend service has to be restarted. An administrator is informed. Please try again in a few minutes.")
                 else:
                     unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                     kernelurl = response_header['Location']
-            except:
-                app.log.exception("uuidcode={} - Could not submit Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
+            except (SpawnException, Exception) as e:
+                if type(e).__name__ == "SpawnException":
+                    err_msg = str(e)
+                else:
+                    err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes"
+                    app.log.exception("uuidcode={} - User message: {} - Could not submit Job. {} {}".format(uuidcode, err_msg, method, remove_secret(method_args)))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             err_msg,
+                             False)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
     
             # get properties of job
@@ -442,6 +529,11 @@ class Jobs(Resource):
                                                                                        method,
                                                                                        method_args)
                     if status_code != 200:
+                        if status_code == 500:
+                            app.log.error("uuidcode={} - UNICORE RESTART REQUIRED!! {}".format(uuidcode, request.json.get('system', '<system_unknown>')))
+                            raise SpawnException("A backend service has to be restarted. An administrator is informed. Please try again in a few minutes.")
+                        else:
+                            app.log.error("uuidcode={} - Unexpected status_code. Add case for this status_code.".format(uuidcode))
                         if i < 4:
                             app.log.debug("uuidcode={} - Could not get properties of Job. Try again in 2 seconds".format(uuidcode))
                             sleep(2)
@@ -456,15 +548,24 @@ class Jobs(Resource):
                             sleep(2)
                         else:
                             break
-                except:
-                    app.log.exception("uuidcode={} - Could not get properties of Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
+                except (SpawnException, Exception) as e:
+                    if type(e).__name__ == "SpawnException":
+                        err_msg = str(e)
+                    else:
+                        err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes"
+                        app.log.exception("uuidcode={} - Could not get properties of Job. {} {}".format(uuidcode, method, remove_secret(method_args)))
                     app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                    stop_job(app.log,
-                             uuidcode,
-                             servername,
-                             request.json.get('system'),
-                             request.headers,
-                             app.urls)
+                    try:
+                        stop_job(app.log,
+                                 uuidcode,
+                                 servername,
+                                 request.json.get('system'),
+                                 request.headers,
+                                 app.urls,
+                                 True,
+                                 err_msg)
+                    except:
+                        app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                     return "", 539
     
     
@@ -482,20 +583,30 @@ class Jobs(Resource):
                                                                                    method,
                                                                                    method_args)
                 if status_code != 200:
+                    app.log.error("uuidcode={} - Unknown status_code. Please add case for this status_code".format(uuidcode))
                     app.log.warning("uuidcode={} - Could not get filedirectory. UNICORE/X Response: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
                     raise Exception("{} - Could not get filedirectory. Throw exception because of wrong status_code: {}".format(uuidcode, status_code))
                 else:
                     unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
                     filedirectory = json.loads(text)['_links']['files']['href']
-            except:
+            except (SpawnException, Exception) as e:
+                if type(e).__name__ == "SpawnException":
+                    err_msg = str(e)
+                else:
+                    err_msg = "Unknown Error. An administrator is informed. Please try again in a few minutes"
                 app.log.exception("uuidcode={} - Could not get filedirectory. {} {}".format(uuidcode, method, remove_secret(method_args)))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
-                stop_job(app.log,
-                         uuidcode,
-                         servername,
-                         request.json.get('system'),
-                         request.headers,
-                         app.urls)
+                try:
+                    stop_job(app.log,
+                             uuidcode,
+                             servername,
+                             request.json.get('system'),
+                             request.headers,
+                             app.urls,
+                             True,
+                             err_msg)
+                except:
+                    app.log.exception("uuidcode={} - Could not stop Job. It may still run".format(uuidcode))
                 return "", 539
     
             return "", 201, {'kernelurl': kernelurl,
