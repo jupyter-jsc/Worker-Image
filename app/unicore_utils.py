@@ -49,7 +49,7 @@ def abort_job(app_logger, uuidcode, kernelurl, unicore_header, cert):
                                                                            method,
                                                                            method_args)
 
-        if status_code != 200:
+        if status_code < 200 or status_code > 299:
             app_logger.warning("uuidcode={} - Could not abort Job. Response from UNICORE/X: {} {} {}".format(uuidcode, text, status_code, remove_secret(response_header)))
         else:
             unicore_header['X-UNICORE-SecuritySession'] = response_header['X-UNICORE-SecuritySession']
