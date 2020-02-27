@@ -333,7 +333,7 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
         startjupyter += inputs.get(system.upper()).get('start').get('executable')
     else:
         startjupyter += 'jupyter labhub $@ --config .config.py &'
-    startjupyter += '\nchild=$!\nwait "$child"'
+        startjupyter += '\nchild=$!\nwait "$child"'
     startjupyter += '\necho "end">.end\n'
     app_logger.trace("uuidcode={} - start.sh file: {}".format(uuidcode, startjupyter.replace("\n", "/n")))
     return startjupyter
