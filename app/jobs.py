@@ -133,6 +133,9 @@ class Jobs(Resource):
             if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
                 # Job is Finished for UNICORE, so it should be for JupyterHub
                 app.log.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
+                if request.headers.get('pollspawner', 'false').lower() == 'true' and properties_json.get('statusMessage', '') == "Failed: Execution was not completed (no exit code file found), please check standard error file <stderr>":
+                    app.log.error("uuidcode={} - UNICORE hotfix: do nothing because that's most likely a bug.".format(uuidcode))
+                    return "", 200
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
