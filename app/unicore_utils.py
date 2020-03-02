@@ -328,7 +328,8 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
         with open(scriptpath, 'r') as f:
             script = f.read()
         startjupyter += script+'\n'
-    startjupyter += 'export JUPYTER_PATH=$PROJECT_{}/.local/share/jupyter:$JUPYTER_PATH\n'.format(project)
+    if project in unicorex_info.get(system.upper(), {}).get("project_path", []):
+        startjupyter += 'export JUPYTER_PATH=$PROJECT_{}/.local/share/jupyter:$JUPYTER_PATH\n'.format(project)
     if 'executable' in inputs.get(system.upper()).get('start').keys():
         startjupyter += inputs.get(system.upper()).get('start').get('executable')
     else:
