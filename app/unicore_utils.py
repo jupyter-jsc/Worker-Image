@@ -192,7 +192,7 @@ def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     return job
 
 # Create Inputs files
-def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote):
+def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote, account):
     app_logger.debug("uuidcode={} - Create Inputs for UNICORE/X.".format(uuidcode))
     inp = []
     ux = get_unicorex()
@@ -208,7 +208,8 @@ def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote
                                                      request_json.get('system'),
                                                      project,
                                                      request_json.get('Checkboxes'),
-                                                     inps) })
+                                                     inps,
+                                                     account) })
 
     inp.append({ 'To': '.config.py', 'Data': get_config(app_logger,
                                                         uuidcode,
@@ -310,18 +311,22 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
     return hostname
 
 
-def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs):
+def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs, account):
     app_logger.debug("uuidcode={} - Create start.sh file".format(uuidcode))
     unicorex_info = utils_file_loads.get_unicorex()
     startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
     startjupyter += 'hostname>.host;\n'
-    startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('precommands', '')+'\n'
+    startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('precommands', '#precommands')+'\n'
     project_link_list = unicorex_info.get(system.upper(), {}).get("projectLinks", [])
     if project in project_link_list:
         startjupyter += "if ! [ -e ${{HOME}}/PROJECT_{} ]; then\n".format(project)
         startjupyter += "  ln -s ${{PROJECT_{project}}} ${{HOME}}/PROJECT_{project}\n".format(project=project)
         startjupyter += "fi\n"
-    startjupyter += inputs.get(system.upper()).get('start').get('defaultmodules')+'\n'
+    if account in inputs.get(system.upper(), {}).get('start', {}).get('accountmodules', {}).keys():
+        startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('accountmodules', {}).get(account, '#usermodules: {}'.format(account))+'\n'
+    else:
+        startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('defaultmodules', '#defaultmodules')+'\n'
+    startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('postcommands', '#postcommands')+'\n'
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
     for scriptpath in checkboxes:

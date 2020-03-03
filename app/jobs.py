@@ -424,7 +424,8 @@ class Jobs(Resource):
                                                             uuidcode,
                                                             request.json,
                                                             request.headers.get('project'),
-                                                            app.urls.get('tunnel', {}).get('url_remote'))
+                                                            app.urls.get('tunnel', {}).get('url_remote'),
+                                                            request.headers.get('account'))
             except (SpawnException, Exception) as e:
                 if type(e).__name__ == "SpawnException":
                     err_msg = str(e)
