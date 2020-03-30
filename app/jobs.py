@@ -132,10 +132,13 @@ class Jobs(Resource):
     
             if properties_json.get('status') in ['SUCCESSFUL', 'ERROR', 'FAILED', 'NOT_SUCCESSFUL']:
                 # Job is Finished for UNICORE, so it should be for JupyterHub
-                app.log.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
-                if request.headers.get('pollspawner', 'false').lower() == 'true' and properties_json.get('statusMessage', '') == "Failed: Execution was not completed (no exit code file found), please check standard error file <stderr>":
-                    app.log.error("uuidcode={} - UNICORE hotfix: do nothing because that's most likely a bug.".format(uuidcode))
-                    return "", 200
+                if request.headers.get('pollspawner', 'false').lower() == 'true':
+                    app.log.error('uuidcode={} - Get (poll spawner): Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
+                    if properties_json.get('statusMessage', '') == "Failed: Execution was not completed (no exit code file found), please check standard error file <stderr>":
+                        app.log.error("uuidcode={} - UNICORE hotfix: do nothing because that's most likely a bug.".format(uuidcode))
+                        return "", 200
+                else:
+                    app.log.error('uuidcode={} - At starting process: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
@@ -152,7 +155,8 @@ class Jobs(Resource):
                             if properties_json.get('statusMessage', '').startswith(key):
                                 error_msg = value
                         if error_msg == "":
-                            app.log.error("uuidcode={} - StatusMessage from Failed UNICORE Job not found in /etc/j4j/j4j_mount/j4j_worker/map_error_messages.json. Please update to have a better user experience".format(uuidcode))
+                            if request.headers.get('pollspawner', 'false').lower() == 'true':
+                                app.log.error("uuidcode={} - StatusMessage from Failed UNICORE Job not found in /etc/j4j/j4j_mount/j4j_worker/map_error_messages.json. Please update to have a better user experience".format(uuidcode))
                             error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 except:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
