@@ -156,6 +156,67 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     app_logger.debug("uuidcode={} - UNICORE/X-8 Job: {}".format(uuidcode, job))
     return job
 
+def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, unicore_input, dashboard_input):
+    app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
+    env_list = []
+    for key, value in request_json.get('Environment', {}).items():
+        env_list.append('{}={}'.format(key, value))
+    job = {'ApplicationName': 'Bash shell',
+           'Environment': env_list,
+           'Imports': []}
+    unicorex_info = utils_file_loads.get_unicorex()
+    if unicorex_info.get(request_json.get('system').upper(), {}).get('set_project', False):
+        if unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get('ALL', '') != '':
+            job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get('ALL', '')
+        elif unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '') != '':
+            job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '')
+        else:
+            job['Project'] = project[1:]
+    for inp in unicore_input:
+        job['Imports'].append(
+            {
+                "From": "inline://dummy",
+                "To"  : inp.get('To'),
+                "Data": inp.get('Data')
+            }
+        )
+    for inp in dashboard_input:
+        job['Imports'].append(
+            {
+                "From": inp.get('From'),
+                "To": inp.get('To')
+            }
+        )
+    if request_json.get('partition') == 'LoginNode':
+        job['Executable'] = '/bin/bash'
+        job['Arguments'] = ['.start.sh']
+        job['Job type'] = 'interactive'
+        for checkboxpath in request_json.get('Checkboxes', []):
+            if 'LoginNodeVIS' in checkboxpath:
+                nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
+                if len(nodes) > 0:
+                    # get system list ... choose one ... use it
+                    node = random.choice(nodes)
+                    app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
+                    job['Login node'] = node
+        app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
+        return job
+    if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
+        job['Resources'] = { 'Queue': request_json.get('partition')}
+    else:
+        job['Resources'] = {}
+    if request_json.get('reservation', None):
+        if len(request_json.get('reservation', '')) > 0 and request_json.get('reservation', 'none').lower() != 'none':
+            job['Resources']['Reservation'] = request_json.get('reservation')
+    for key, value in request_json.get('Resources').items():
+        job['Resources'][key] = value
+    job['Executable'] = '/bin/bash'
+    job['Arguments'] = ['.start.sh']
+    app_logger.debug("uuidcode={} - UNICORE/X-8 Job: {}".format(uuidcode, job))
+    return job
+
+
+
 # Create Job Dict
 def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("uuidcode={} - Create UNICORE/X-7 Job.".format(uuidcode))
@@ -238,6 +299,44 @@ def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user):
     app_logger.trace("uuidcode={} - Config: {}".format(uuidcode, ret.replace("\n","/n")))
     return ret
 
+# Create Inputs files
+def create_inputs_dashboards(app_logger, uuidcode, request_json, project, tunnel_url_remote, account, dashboard_info, dashboard_name):
+    app_logger.debug("uuidcode={} - Create Inputs for UNICORE/X.".format(uuidcode))
+    inp = []
+    ux = get_unicorex()
+    nodes = ux.get(request_json.get('system').upper(), {}).get('nodes', [])
+    with open(dashboard_info.get(request_json.get('system'), {}).get("config_file")) as f:
+        baseconf = f.read().rstrip()
+    inps = get_inputs()
+    node = get_remote_node(app_logger,
+                           uuidcode,
+                           tunnel_url_remote,
+                           nodes)
+    inp.append({ 'To': '.start.sh', 'Data': dashboard_start_sh(app_logger,
+                                                               uuidcode,
+                                                               request_json.get('system'),
+                                                               project,
+                                                               request_json.get('Checkboxes'),
+                                                               inps,
+                                                               account,
+                                                               dashboard_info,
+                                                               dashboard_name) })
+
+    inp.append({ 'To': '.config.py', 'Data': get_config(app_logger,
+                                                        uuidcode,
+                                                        baseconf,
+                                                        request_json.get('port'),
+                                                        node,
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER'),
+                                                        dashboard_info) })
+    inp.append({ 'To': '.jupyter.token', 'Data': request_json.get('Environment').get('JUPYTERHUB_API_TOKEN') })
+    try:
+        del request_json['Environment']['JUPYTERHUB_API_TOKEN']
+        del request_json['Environment']['JPY_API_TOKEN']
+    except KeyError:
+        pass
+    app_logger.trace("uuidcode={} - Inputs for UNICORE/X: {}".format(uuidcode, inp))
+    return inp
 
 
 def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
@@ -309,6 +408,46 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
         del unicore_header['Accept']
     app_logger.debug("uuidcode={} - Log from {} to {} copied".format(uuidcode, kernelurl, directory))
     return hostname
+
+def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs, account, dashboard_info, dashboard_name):
+    app_logger.debug("uuidcode={} - Create start.sh file for dashboard".format(uuidcode))
+    #dashboard_info = utils_file_loads.get_dashboards().get(dashboard_name, {})
+    startjupyter = '#!/bin/bash\n_term() {\n  echo \"Caught SIGTERM signal!\"\n  kill -TERM \"$child\" 2>/dev/null\n}\ntrap _term SIGTERM\n'
+    startjupyter += 'hostname>.host;\n'
+    #hpc_type = dashboard_info.get(system, {}).get('hpctype', '<Please set hpc type in dashboards.json for {}:{}>'.format(dashboard_name, system))
+    if 'precommands' in dashboard_info.get(system, {}).keys():
+        precommand = dashboard_info.get(system, {}).get('precommands', '#precommands-{}'.format(dashboard_name))
+    else:
+        precommand = inputs.get(system.upper(), {}).get('start', {}).get('precommands', '#precommands')
+    startjupyter += precommand + '\n'    
+    if 'modules' in dashboard_info.get(system, {}).keys():
+        modules = dashboard_info.get(system, {}).get('modules', '#modules-{}'.format(dashboard_name))
+    else:
+        modules = inputs.get(system.upper(), {}).get('start', {}).get('defaultmodules', '#defaultmodules')
+    startjupyter += modules +'\n'
+    if 'postcommands' in dashboard_info.get(system, {}).keys():
+        postcommands = dashboard_info.get(system, {}).get('postcommands', '#postcommands-{}'.format(dashboard_name))
+    else:
+        postcommands = inputs.get(system.upper(), {}).get('start', {}).get('postcommands', '#postcommands')
+    startjupyter += postcommands +'\n'
+    startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
+    startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
+    for scriptpath in checkboxes:
+        with open(scriptpath, 'r') as f:
+            script = f.read()
+        startjupyter += script+'\n'
+    if 'jupyter_path' in dashboard_info.get(system, {}).keys():
+        startjupyter += 'export JUPYTER_PATH={}:$JUPYTER_PATH\n'.format(dashboard_info.get(system, {}).get('jupyter_path', '/'))
+    if 'executable' in dashboard_info.get(system, {}).keys():
+        executable = dashboard_info.get(system, {}).get('executable', '#executable-{}'.format(dashboard_name))
+    elif 'executable' in inputs.get(system.upper()).get('start').keys():
+        executable += inputs.get(system.upper()).get('start').get('executable')
+    else:
+        executable += 'jupyter labhub $@ --config .config.py &\nchild=$!\nwait "$child"'
+    startjupyter += executable + '\n'
+    startjupyter += 'echo "end">.end\n'
+    app_logger.trace("uuidcode={} - start.sh file: {}".format(uuidcode, startjupyter.replace("\n", "/n")))
+    return startjupyter
 
 
 def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs, account):

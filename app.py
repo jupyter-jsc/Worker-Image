@@ -20,6 +20,7 @@ from flask_restful import Api
 
 from app.jobs import Jobs
 from app.health import HealthHandler
+from app.dashboards import Dashboards
 
 with open('/etc/j4j/j4j_mount/j4j_common/mail_receiver.json') as f:
     mail = json.load(f)
@@ -132,6 +133,7 @@ if not application.debug:
 api = Api(application)
 
 api.add_resource(Jobs, "/jobs")
+api.add_resource(Dashboards, "/dashboards")
 api.add_resource(HealthHandler, "/health")
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=9006)
