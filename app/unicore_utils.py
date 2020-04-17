@@ -327,8 +327,7 @@ def create_inputs_dashboards(app_logger, uuidcode, request_json, project, tunnel
                                                         baseconf,
                                                         request_json.get('port'),
                                                         node,
-                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER'),
-                                                        dashboard_info) })
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER')) })
     inp.append({ 'To': '.jupyter.token', 'Data': request_json.get('Environment').get('JUPYTERHUB_API_TOKEN') })
     try:
         del request_json['Environment']['JUPYTERHUB_API_TOKEN']
