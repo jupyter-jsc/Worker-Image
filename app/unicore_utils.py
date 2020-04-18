@@ -435,9 +435,9 @@ def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs
     if 'executable' in dashboard_info.get(system, {}).keys():
         executable = dashboard_info.get(system, {}).get('executable', '#executable-{}'.format(dashboard_name))
     elif 'executable' in inputs.get(system.upper()).get('start').keys():
-        executable += inputs.get(system.upper()).get('start').get('executable')
+        executable = inputs.get(system.upper()).get('start').get('executable')
     else:
-        executable += 'jupyter labhub $@ --config .config.py &\nchild=$!\nwait "$child"'
+        executable = 'jupyter labhub $@ --config .config.py &\nchild=$!\nwait "$child"'
     startjupyter += executable + '\n'
     startjupyter += 'echo "end">.end\n'
     app_logger.trace("uuidcode={} - start.sh file: {}".format(uuidcode, startjupyter.replace("\n", "/n")))
