@@ -395,7 +395,6 @@ class Dashboards(Resource):
                           request.headers.get('Intern-Authorization'))
             dashboard_name = request.json.get('dashboard')
             dashboard_info = utils_file_loads.get_dashboards().get(dashboard_name, {})
-            dashboard_inputs = dashboard_info.get(request.json.get('system', ''), {}).get('uploadpaths', [])
             servername = request.headers.get('servername')
             # Create header for unicore job
             try:
@@ -464,8 +463,7 @@ class Dashboards(Resource):
                                                                        uuidcode,
                                                                        request.json,
                                                                        request.headers.get('Project'),
-                                                                       unicore_input,
-                                                                       dashboard_inputs)
+                                                                       unicore_input)
 
             # Get URL and certificate to communicate with UNICORE/X
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X url".format(uuidcode))

@@ -156,7 +156,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     app_logger.debug("uuidcode={} - UNICORE/X-8 Job: {}".format(uuidcode, job))
     return job
 
-def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, unicore_input, dashboard_input):
+def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
     env_list = []
     for key, value in request_json.get('Environment', {}).items():
@@ -178,13 +178,6 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
                 "From": "inline://dummy",
                 "To"  : inp.get('To'),
                 "Data": inp.get('Data')
-            }
-        )
-    for inp in dashboard_input:
-        job['Imports'].append(
-            {
-                "From": inp.get('From'),
-                "To": inp.get('To')
             }
         )
     if request_json.get('partition') == 'LoginNode':
@@ -418,7 +411,7 @@ def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs
         precommand = dashboard_info.get(system, {}).get('precommands', '#precommands-{}'.format(dashboard_name))
     else:
         precommand = inputs.get(system.upper(), {}).get('start', {}).get('precommands', '#precommands')
-    startjupyter += precommand + '\n'    
+    startjupyter += precommand + '\n'
     if 'modules' in dashboard_info.get(system, {}).keys():
         modules = dashboard_info.get(system, {}).get('modules', '#modules-{}'.format(dashboard_name))
     else:
@@ -429,6 +422,8 @@ def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs
     else:
         postcommands = inputs.get(system.upper(), {}).get('start', {}).get('postcommands', '#postcommands')
     startjupyter += postcommands +'\n'
+    if 'downloadcommands' in dashboard_info.get(system, {}).keys():
+        startjupyter += dashboard_info.get(system, {}).get('downloadcommands')
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
     for scriptpath in checkboxes:
