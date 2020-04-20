@@ -62,6 +62,11 @@ def get_unity():
         unity = json.load(f)
     return unity
 
+def get_urls():
+    with open('/etc/j4j/j4j_mount/j4j_common/urls.json', 'r') as f:
+        unity = json.load(f)
+    return unity
+
 def map_error_messages():
     with open('/etc/j4j/j4j_mount/j4j_worker/map_error_messages.json', 'r') as f:
         ret = json.load(f)

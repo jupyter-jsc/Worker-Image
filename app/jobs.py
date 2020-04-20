@@ -462,7 +462,8 @@ class Jobs(Resource):
                                                                  uuidcode,
                                                                  request.json,
                                                                  request.headers.get('Project'),
-                                                                 unicore_input)
+                                                                 unicore_input,
+                                                                 request.headers.get('escapedusername'))
             else:
                 unicore_json = unicore_utils.create_job(app.log,
                                                         uuidcode,

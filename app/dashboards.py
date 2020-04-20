@@ -463,7 +463,8 @@ class Dashboards(Resource):
                                                                        uuidcode,
                                                                        request.json,
                                                                        request.headers.get('Project'),
-                                                                       unicore_input)
+                                                                       unicore_input,
+                                                                       request.headers.get('escapedusername'))
 
             # Get URL and certificate to communicate with UNICORE/X
             app.log.trace("uuidcode={} - FileLoad: UNICORE/X url".format(uuidcode))

@@ -104,7 +104,7 @@ def create_header(app_logger, uuidcode, request_headers, app_hub_url_proxy_route
     return unicore_header, accesstoken, expire
 
 #
-def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_input):
+def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_input, escapedusername):
     app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
     env_list = []
     for key, value in request_json.get('Environment', {}).items():
@@ -128,6 +128,12 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
                 "Data": inp.get('Data')
             }
         )
+    urls = utils_file_loads.get_urls()
+    ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
+    app_logger.debug("D1: {}".format(ux_notify))
+    app_logger.debug("D2: {}".format(request_json))
+    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    job['Notification'] = ux_notify
     if request_json.get('partition') == 'LoginNode':
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
@@ -423,7 +429,7 @@ def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs
         postcommands = inputs.get(system.upper(), {}).get('start', {}).get('postcommands', '#postcommands')
     startjupyter += postcommands +'\n'
     if 'downloadcommands' in dashboard_info.get(system, {}).keys():
-        startjupyter += dashboard_info.get(system, {}).get('downloadcommands')
+        startjupyter += dashboard_info.get(system, {}).get('downloadcommands') + "\n"
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
     for scriptpath in checkboxes:
