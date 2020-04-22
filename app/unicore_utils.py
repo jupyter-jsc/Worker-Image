@@ -276,7 +276,9 @@ def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote
                                                         baseconf,
                                                         request_json.get('port'),
                                                         node,
-                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER')) })
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER'),
+                                                        request_json.get('service'),
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME')) })
     inp.append({ 'To': '.jupyter.token', 'Data': request_json.get('Environment').get('JUPYTERHUB_API_TOKEN') })
     try:
         del request_json['Environment']['JUPYTERHUB_API_TOKEN']
@@ -287,7 +289,7 @@ def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote
     return inp
 
 
-def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user):
+def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user, service, servername=''):
     app_logger.debug("uuidcode={} - Generate config".format(uuidcode))
     hubport = get_hub_port()
     ret = baseconf + '\nc.SingleUserLabApp.port = {}'.format(port)
@@ -295,6 +297,8 @@ def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user):
     base_url = get_base_url()
     ret += '\nc.SingleUserLabApp.hub_api_url = "http://{}:{}{}hub/api"'.format(hubnode, hubport, base_url)
     ret += '\nc.SingleUserLabApp.hub_activity_url = "http://{}:{}{}hub/api/users/{}/activity"\n'.format(hubnode, hubport, base_url, user)
+    if service == "JupyterLab":
+        ret += '\nSingleUserLabApp.default_url = "/lab/workspaces/{}"\n'.format(servername)
     app_logger.trace("uuidcode={} - Config: {}".format(uuidcode, ret.replace("\n","/n")))
     return ret
 
@@ -326,7 +330,9 @@ def create_inputs_dashboards(app_logger, uuidcode, request_json, project, tunnel
                                                         baseconf,
                                                         request_json.get('port'),
                                                         node,
-                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER')) })
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_USER'),
+                                                        request_json.get('service'),
+                                                        request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME')) })
     inp.append({ 'To': '.jupyter.token', 'Data': request_json.get('Environment').get('JUPYTERHUB_API_TOKEN') })
     try:
         del request_json['Environment']['JUPYTERHUB_API_TOKEN']
