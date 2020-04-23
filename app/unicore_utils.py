@@ -310,8 +310,11 @@ def create_inputs_dashboards(app_logger, uuidcode, request_json, project, tunnel
     inp = []
     ux = get_unicorex()
     nodes = ux.get(request_json.get('system').upper(), {}).get('nodes', [])
-    with open(dashboard_info.get(request_json.get('system'), {}).get("config_file")) as f:
-        baseconf = f.read().rstrip()
+    try:
+        with open(dashboard_info.get(request_json.get('system'), {}).get("config_file")) as f:
+            baseconf = f.read().rstrip()
+    except:
+        baseconf = ""
     inps = get_inputs()
     node = get_remote_node(app_logger,
                            uuidcode,
