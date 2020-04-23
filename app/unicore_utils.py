@@ -130,8 +130,6 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
         )
     urls = utils_file_loads.get_urls()
     ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
-    app_logger.debug("D1: {}".format(ux_notify))
-    app_logger.debug("D2: {}".format(request_json))
     ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
     job['Notification'] = ux_notify
     if request_json.get('partition') == 'LoginNode':
@@ -162,7 +160,7 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     app_logger.debug("uuidcode={} - UNICORE/X-8 Job: {}".format(uuidcode, job))
     return job
 
-def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, unicore_input):
+def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, unicore_input, escapedusername):
     app_logger.debug("uuidcode={} - Create UNICORE/X-8 Job.".format(uuidcode))
     env_list = []
     for key, value in request_json.get('Environment', {}).items():
@@ -186,6 +184,10 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
                 "Data": inp.get('Data')
             }
         )
+    urls = utils_file_loads.get_urls()
+    ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
+    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    job['Notification'] = ux_notify
     if request_json.get('partition') == 'LoginNode':
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
