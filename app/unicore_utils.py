@@ -300,7 +300,7 @@ def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user, servic
     ret += '\nc.SingleUserNotebookApp.hub_api_url = "http://{}:{}{}hub/api"'.format(hubnode, hubport, base_url)
     ret += '\nc.SingleUserNotebookApp.hub_activity_url = "http://{}:{}{}hub/api/users/{}/activity"\n'.format(hubnode, hubport, base_url, user)
     if service == "JupyterLab":
-        ret += '\nSingleUserNotebookApp.default_url = "/lab/workspaces/{}"\n'.format(servername)
+        ret += '\nc.SingleUserNotebookApp.default_url = "/lab/workspaces/{}"\n'.format(servername)
     app_logger.trace("uuidcode={} - Config: {}".format(uuidcode, ret.replace("\n","/n")))
     return ret
 
