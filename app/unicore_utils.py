@@ -294,13 +294,13 @@ def create_inputs(app_logger, uuidcode, request_json, project, tunnel_url_remote
 def get_config(app_logger, uuidcode, baseconf, port, hubapiurlnode, user, service, servername=''):
     app_logger.debug("uuidcode={} - Generate config".format(uuidcode))
     hubport = get_hub_port()
-    ret = baseconf + '\nc.SingleUserLabApp.port = {}'.format(port)
+    ret = baseconf + '\nc.SingleUserNotebookApp.port = {}'.format(port)
     hubnode = get_fastnet_changes(hubapiurlnode)
     base_url = get_base_url()
-    ret += '\nc.SingleUserLabApp.hub_api_url = "http://{}:{}{}hub/api"'.format(hubnode, hubport, base_url)
-    ret += '\nc.SingleUserLabApp.hub_activity_url = "http://{}:{}{}hub/api/users/{}/activity"\n'.format(hubnode, hubport, base_url, user)
+    ret += '\nc.SingleUserNotebookApp.hub_api_url = "http://{}:{}{}hub/api"'.format(hubnode, hubport, base_url)
+    ret += '\nc.SingleUserNotebookApp.hub_activity_url = "http://{}:{}{}hub/api/users/{}/activity"\n'.format(hubnode, hubport, base_url, user)
     if service == "JupyterLab":
-        ret += '\nSingleUserLabApp.default_url = "/lab/workspaces/{}"\n'.format(servername)
+        ret += '\nSingleUserNotebookApp.default_url = "/lab/workspaces/{}"\n'.format(servername)
     app_logger.trace("uuidcode={} - Config: {}".format(uuidcode, ret.replace("\n","/n")))
     return ret
 
