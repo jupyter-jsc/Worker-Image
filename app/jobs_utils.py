@@ -53,14 +53,14 @@ def stop_job(app_logger, uuidcode, servername, system, request_headers, app_urls
                                 request_headers.get('kernelurl'),
                                 unicore_header,
                                 cert)
-    
-        # Destroy the Job via UNICORE
-        app_logger.debug("uuidcode={} - Destroy Job".format(uuidcode))
-        unicore_utils.destroy_job(app_logger,
-                                  uuidcode,
-                                  request_headers.get('kernelurl'),
-                                  unicore_header,
-                                  cert)
+        if unicorex.get(system, {}).get('destroyjobs', 'false').lower() == 'true':
+            # Destroy the Job via UNICORE
+            app_logger.debug("uuidcode={} - Destroy Job".format(uuidcode))
+            unicore_utils.destroy_job(app_logger,
+                                      uuidcode,
+                                      request_headers.get('kernelurl'),
+                                      unicore_header,
+                                      cert)
     
     # Kill the tunnel
     tunnel_info = { "servername": servername }
