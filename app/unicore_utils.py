@@ -132,18 +132,17 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
     ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
     ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
     job['Notification'] = ux_notify
-    if request_json.get('partition') == 'LoginNode':
+    if request_json.get('partition') in ['LoginNode', 'LoginNodeVis']:
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
         job['Job type'] = 'interactive'
-        for checkboxpath in request_json.get('Checkboxes', []):
-            if 'LoginNodeVIS' in checkboxpath:
-                nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
-                if len(nodes) > 0:
-                    # get system list ... choose one ... use it
-                    node = random.choice(nodes)
-                    app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
-                    job['Login node'] = node
+        if request_json.get('partition') in ['LoginNodeVis']:
+            nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
+            if len(nodes) > 0:
+                # get system list ... choose one ... use it
+                node = random.choice(nodes)
+                app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
+                job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
     if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
@@ -190,18 +189,17 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
     ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
     ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
     job['Notification'] = ux_notify
-    if request_json.get('partition') == 'LoginNode':
+    if request_json.get('partition') in ['LoginNode', 'LoginNodeVis']:
         job['Executable'] = '/bin/bash'
         job['Arguments'] = ['.start.sh']
         job['Job type'] = 'interactive'
-        for checkboxpath in request_json.get('Checkboxes', []):
-            if 'LoginNodeVIS' in checkboxpath:
-                nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
-                if len(nodes) > 0:
-                    # get system list ... choose one ... use it
-                    node = random.choice(nodes)
-                    app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
-                    job['Login node'] = node
+        if request_json.get('partition') in ['LoginNodeVis']:
+            nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNodeVis', [])
+            if len(nodes) > 0:
+                # get system list ... choose one ... use it
+                node = random.choice(nodes)
+                app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
+                job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
     if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
@@ -221,6 +219,7 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
 
 
 # Create Job Dict
+# deprecated
 def create_job(app_logger, uuidcode, request_json, project, unicore_input):
     app_logger.debug("uuidcode={} - Create UNICORE/X-7 Job.".format(uuidcode))
     job = {'ApplicationName': 'Jupyter4JSC',
