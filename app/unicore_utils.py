@@ -143,6 +143,14 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
                 node = random.choice(nodes)
                 app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
                 job['Login node'] = node
+        elif 'LoginNodeVis' in unicorex_info.get(request_json.get('system').upper(), {}).keys():
+            # this system supports vis nodes. So we have to set the non vis nodes explicitly
+            nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNode', [])
+            if len(nodes) > 0:
+                # get system list ... choose one ... use it
+                node = random.choice(nodes)
+                app_logger.trace("uuidcode={} - Use random non-VIS Node: {}".format(uuidcode, node))
+                job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
     if unicorex_info.get(request_json.get('system').upper(), {}).get('queues', False):
@@ -199,6 +207,14 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
                 # get system list ... choose one ... use it
                 node = random.choice(nodes)
                 app_logger.trace("uuidcode={} - Use random VIS Node: {}".format(uuidcode, node))
+                job['Login node'] = node
+        elif 'LoginNodeVis' in unicorex_info.get(request_json.get('system').upper(), {}).keys():
+            # this system supports vis nodes. So we have to set the non vis nodes explicitly
+            nodes = unicorex_info.get(request_json.get('system').upper(), {}).get('LoginNode', [])
+            if len(nodes) > 0:
+                # get system list ... choose one ... use it
+                node = random.choice(nodes)
+                app_logger.trace("uuidcode={} - Use random non-VIS Node: {}".format(uuidcode, node))
                 job['Login node'] = node
         app_logger.trace("uuidcode={} - UNICORE/X Job: {}".format(uuidcode, job))
         return job
