@@ -8,7 +8,7 @@ RUN pip3 install flask-restful==0.3.7 uwsgi==2.0.17.1 pyunicore==0.5.7
 
 RUN mkdir -p /etc/j4j/J4J_UNICORE
 
-RUN adduser --disabled-password --gecos '' worker
+RUN adduser --disabled-password --gecos '' unicore
 
 RUN chown unicore:unicore /etc/j4j/J4J_UNICORE
 
