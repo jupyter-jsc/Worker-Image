@@ -1,4 +1,4 @@
-# J4J_Worker
+# J4J_UNICORE
 
 FROM ubuntu:18.04
 
@@ -6,22 +6,22 @@ RUN apt update && apt install -y ssh=1:7.6p1-4ubuntu0.3 && apt install -y python
 
 RUN pip3 install flask-restful==0.3.7 uwsgi==2.0.17.1 pyunicore==0.5.7
 
-RUN mkdir -p /etc/j4j/J4J_Worker
+RUN mkdir -p /etc/j4j/J4J_UNICORE
 
 RUN adduser --disabled-password --gecos '' worker
 
-RUN chown worker:worker /etc/j4j/J4J_Worker
+RUN chown unicore:unicore /etc/j4j/J4J_UNICORE
 
-USER worker
+USER unicore
 
-COPY --chown=worker:worker ./app /etc/j4j/J4J_Worker/app
+COPY --chown=unicore:unicore ./app /etc/j4j/J4J_UNICORE/app
 
-COPY --chown=worker:worker ./app.py /etc/j4j/J4J_Worker/app.py
+COPY --chown=unicore:unicore ./app.py /etc/j4j/J4J_UNICORE/app.py
 
-COPY --chown=worker:worker ./scripts /etc/j4j/J4J_Worker
+COPY --chown=unicore:unicore ./scripts /etc/j4j/J4J_UNICORE
 
-COPY --chown=worker:worker ./uwsgi.ini /etc/j4j/J4J_Worker/uwsgi.ini
+COPY --chown=unicore:unicore ./uwsgi.ini /etc/j4j/J4J_UNICORE/uwsgi.ini
 
-WORKDIR /etc/j4j/J4J_Worker
+WORKDIR /etc/j4j/J4J_UNICORE
 
-CMD /etc/j4j/J4J_Worker/start.sh
+CMD /etc/j4j/J4J_UNICORE/start.sh

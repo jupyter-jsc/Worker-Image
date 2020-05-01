@@ -7,12 +7,12 @@ Created on May 14, 2019
 
 from flask_restful import abort
 
-from app.utils_file_loads import get_j4j_worker_token
+from app.utils_file_loads import get_j4j_unicore_token
 
 
 def validate_auth(app_logger, uuidcode, intern_authorization):
     if not intern_authorization == None:
-        token = get_j4j_worker_token()
+        token = get_j4j_unicore_token()
         if intern_authorization == token:
             app_logger.debug("uuidcode={} - Intern-Authorization validated".format(uuidcode))
             return

@@ -7,8 +7,8 @@ Created on May 14, 2019
 
 import json 
 
-def get_j4j_worker_token():
-    with open('/etc/j4j/j4j_mount/j4j_token/worker.token') as f:
+def get_j4j_unicore_token():
+    with open('/etc/j4j/j4j_mount/j4j_token/unicore.token') as f:
         token = f.read().rstrip()
     return token
 
@@ -28,7 +28,7 @@ def get_jhubtoken():
     return token
 
 def get_base_url():
-    with open('/etc/j4j/j4j_mount/j4j_worker/base_url.json', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/base_url.json', 'r') as f:
         base = json.load(f)
     return base.get('base_url', '/')
 
@@ -38,22 +38,22 @@ def get_unicorex():
     return data
 
 def get_jlab_conf():
-    with open('/etc/j4j/j4j_mount/j4j_worker/jupyterlab.conf', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/jupyterlab.conf', 'r') as f:
         conf = f.read().rstrip()
     return conf
 
 def get_inputs():
-    with open('/etc/j4j/j4j_mount/j4j_worker/inputs.json', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/inputs.json', 'r') as f:
         inps = json.load(f)
     return inps
 
 def get_hub_port():
-    with open('/etc/j4j/j4j_mount/j4j_worker/hub.port', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/hub.port', 'r') as f:
         hubport = f.read().rstrip()
     return hubport
 
 def get_fastnet_changes(node):
-    with open('/etc/j4j/j4j_mount/j4j_worker/fastnet.json', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/fastnet.json', 'r') as f:
         fastnet = json.load(f)
     return fastnet.get(node, node)
 
@@ -68,7 +68,7 @@ def get_urls():
     return unity
 
 def map_error_messages():
-    with open('/etc/j4j/j4j_mount/j4j_worker/map_error_messages.json', 'r') as f:
+    with open('/etc/j4j/j4j_mount/j4j_unicore/map_error_messages.json', 'r') as f:
         ret = json.load(f)
     return ret
 

@@ -156,7 +156,7 @@ class Dashboards(Resource):
                                 error_msg = value
                         if error_msg == "":
                             if request.headers.get('pollspawner', 'false').lower() == 'true':
-                                app.log.error("uuidcode={} - StatusMessage from Failed UNICORE Job not found in /etc/j4j/j4j_mount/j4j_worker/map_error_messages.json. Please update to have a better user experience".format(uuidcode))
+                                app.log.error("uuidcode={} - StatusMessage from Failed UNICORE Job not found in /etc/j4j/j4j_mount/j4j_unicore/map_error_messages.json. Please update to have a better user experience".format(uuidcode))
                             error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
                 except:
                     error_msg = "Could not start your Job. Please check your configuration. An administrator is informed."
