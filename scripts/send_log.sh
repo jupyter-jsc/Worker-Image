@@ -8,7 +8,7 @@ with open(sys.argv[1], 'rb') as f:
 
 num_procs = 1
 try:
-    with open('/etc/j4j/J4J_Worker/uwsgi.ini', 'r') as f:
+    with open('/etc/j4j/J4J_UNICORE/uwsgi.ini', 'r') as f:
         uwsgi_ini = f.read()
     num_procs = int(uwsgi_ini.split('processes = ')[1].split('\n')[0])
 except:
