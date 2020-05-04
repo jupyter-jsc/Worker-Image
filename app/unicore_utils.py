@@ -130,7 +130,8 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
         )
     urls = utils_file_loads.get_urls()
     ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
-    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    ux_notify_server_name = "{}_{}_{}".format(len(uuidcode), uuidcode, request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', ux_notify_server_name)
     job['Notification'] = ux_notify
     if request_json.get('partition') in ['LoginNode', 'LoginNodeVis']:
         job['Executable'] = '/bin/bash'
@@ -195,7 +196,8 @@ def create_unicore8_job_dashboard(app_logger, uuidcode, request_json, project, u
         )
     urls = utils_file_loads.get_urls()
     ux_notify = urls.get('hub', {}).get('url_ux', '<no_url_for_unicore_notification_configured>')
-    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    ux_notify_server_name = "{}_{}_{}".format(len(uuidcode), uuidcode, request_json.get('Environment', {}).get('JUPYTERHUB_SERVER_NAME'))
+    ux_notify = ux_notify.replace('<user>', escapedusername).replace('<server>', ux_notify_server_name)
     job['Notification'] = ux_notify
     if request_json.get('partition') in ['LoginNode', 'LoginNodeVis']:
         job['Executable'] = '/bin/bash'
