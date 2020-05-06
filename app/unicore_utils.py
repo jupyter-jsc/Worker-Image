@@ -118,8 +118,10 @@ def create_unicore8_job(app_logger, uuidcode, request_json, project, unicore_inp
             job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get('ALL', '')
         elif unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '') != '':
             job['Project'] = unicorex_info.get(request_json.get('system').upper(), {}).get('projects', {}).get(project.lower(), '')
-        else:
+        elif unicorex_info.get(request_json.get('system').upper(), {}).get('projects_truncate', False):
             job['Project'] = project[1:]
+        else:
+            job['Project'] = project
     for inp in unicore_input:
         job['Imports'].append(
             {
