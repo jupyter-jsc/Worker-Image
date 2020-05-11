@@ -464,9 +464,10 @@ def dashboard_start_sh(app_logger, uuidcode, system, project, checkboxes, inputs
         startjupyter += dashboard_info.get(system, {}).get('downloadcommands') + "\n"
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
-    for scriptpath in checkboxes:
-        with open(scriptpath, 'r') as f:
-            script = f.read()
+    for cbname, cbinfos in checkboxes.items():
+        script = "# {}\n".format(cbname)
+        with open(cbinfos.get('scriptpath'), 'r') as f:            
+            script += f.read()
         startjupyter += script+'\n'
     if 'jupyter_path' in dashboard_info.get(system, {}).keys():
         startjupyter += 'export JUPYTER_PATH={}:$JUPYTER_PATH\n'.format(dashboard_info.get(system, {}).get('jupyter_path', '/'))
@@ -500,9 +501,10 @@ def start_sh(app_logger, uuidcode, system, project, checkboxes, inputs, account)
     startjupyter += inputs.get(system.upper(), {}).get('start', {}).get('postcommands', '#postcommands')+'\n'
     startjupyter += 'export JPY_API_TOKEN=`cat .jupyter.token`\n'
     startjupyter += 'export JUPYTERHUB_API_TOKEN=`cat .jupyter.token`\n'
-    for scriptpath in checkboxes:
-        with open(scriptpath, 'r') as f:
-            script = f.read()
+    for cbname, cbinfos in checkboxes.items():
+        script = "# {}\n".format(cbname)
+        with open(cbinfos.get('scriptpath'), 'r') as f:            
+            script += f.read()
         startjupyter += script+'\n'
     if project in unicorex_info.get(system.upper(), {}).get("project_path", []):
         startjupyter += 'export JUPYTER_PATH=$PROJECT_{}/.local/share/jupyter:$JUPYTER_PATH\n'.format(project)
