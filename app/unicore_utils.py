@@ -426,7 +426,7 @@ def copy_log(app_logger, uuidcode, unicore_header, filedir, kernelurl, cert):
                 app_logger.warning("uuidcode={} - Could not save file {} from {}. Try next. Response from UNICORE: {} {} {}".format(uuidcode, child, kernelurl, content, status_code, remove_secret(response_header)))
                 continue
             with open(directory+'/'+child, 'w') as f:
-                f.write(content)
+                f.write(str(content.encode("utf-8")))
             if child == ".host" or child == "/.host":
                 hostname = content.strip()
         except:
