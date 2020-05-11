@@ -127,7 +127,8 @@ def get(app_logger, uuidcode, request_headers, unicore_header, app_urls, cert):
                                                     app_urls.get('orchestrator', {}).get('url_skip'),
                                                     request_headers.get('servername'),
                                                     'False')
-                app_logger.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub.\n{}'.format(uuidcode, properties_json.get('status'), properties_json))
+                if not properties_json.get('statusMessage') == 'Job was aborted by the user.':
+                    app_logger.error('uuidcode={} - Get: Job is finished or failed - JobStatus: {}. Send Information to JHub.\n{}'.format(uuidcode, properties_json.get('status'), properties_json))
                 app_logger.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 error_msg = ""
                 try:

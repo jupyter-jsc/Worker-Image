@@ -138,7 +138,8 @@ class Dashboards(Resource):
                         app.log.error("uuidcode={} - UNICORE hotfix: do nothing because that's most likely a bug.".format(uuidcode))
                         return "", 200
                 else:
-                    app.log.error('uuidcode={} - At starting process: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
+                    if not properties_json.get('statusMessage') == 'Job was aborted by the user.':
+                        app.log.error('uuidcode={} - At starting process: Job is finished or failed - JobStatus: {}. Send Information to JHub. {}'.format(uuidcode, properties_json.get('status'), properties_json))
                 app.log.trace("uuidcode={} - Call stop_job".format(uuidcode))
                 orchestrator_communication.set_skip(app.log,
                                                     uuidcode,
